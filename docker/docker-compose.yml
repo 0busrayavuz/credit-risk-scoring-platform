@@ -13,8 +13,11 @@ services:
       - pgdata:/var/lib/postgresql/data
       # Ham CSV'ler: container icinden COPY ile okuyabilmek icin salt-okunur baglaniyor
       - ../data/raw:/data/raw:ro
-      # Ilk acilista otomatik calisan SQL scriptleri (sema olusturma)
-      - ../sql/00_init:/docker-entrypoint-initdb.d:ro
+      # Tum SQL scriptleri: container icinden `psql -f /sql/...` ile calistirilir.
+      # Not: Bilincli olarak /docker-entrypoint-initdb.d KULLANMIYORUZ, cunku o
+      # klasor sadece veritabani ILK kez olusturulurken calisir. Semayi acikca
+      # uygulamak, "neden calismadi?" surprizlerinden iyidir.
+      - ../sql:/sql:ro
     shm_size: 1gb
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
