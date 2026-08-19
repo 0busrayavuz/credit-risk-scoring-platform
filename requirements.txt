@@ -1,0 +1,18 @@
+# --- Asama 1: veri yukleme ve kesif ---
+# Bilincli olarak minimal tutuldu. Her asamada gerekeni ekleyecegiz;
+# bastan 30 paket kurmak, birbiriyle cakisan surumler demek.
+
+pandas>=2.2
+numpy>=1.26
+
+# Postgres baglantisi
+SQLAlchemy>=2.0        # Python tarafindan SQL calistirmak icin
+psycopg2-binary>=2.9   # Postgres surucusu
+
+# .env dosyasindaki sifreyi koda gomeden okumak icin
+python-dotenv>=1.0
+
+# Kesif ve gorsellestirme
+jupyter>=1.0
+matplotlib>=3.8
+seaborn>=0.13
