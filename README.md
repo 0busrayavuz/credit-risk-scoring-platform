@@ -80,6 +80,15 @@ Dış kredi geçmişindeki gecikme oranı ile temerrüt arasında **düzgün art
 | %5–20 | 7.281 | %12,31 |
 | %20+ | 1.518 | **%16,34** |
 
+Kredi kartı **limit kullanım oranı** ise en güçlü tekil sinyal olarak öne çıktı:
+
+| Ortalama limit kullanımı | Müşteri | Temerrüt oranı |
+|---|---:|---:|
+| %10'un altı | 33.574 | %5,44 |
+| %10–40 | 19.218 | %7,18 |
+| %40–80 | 22.809 | %10,71 |
+| %80 üzeri | 10.435 | **%17,09** |
+
 Ayrıca dikkat çekici bir bulgu: **kredi geçmişi hiç olmayan** müşterilerin temerrüt
 oranı (%10,12), temiz geçmişi olanlardan (%7,57) **daha yüksektir**. Bankacılıkta
 *thin file / credit invisible* olarak bilinen bu durum nedeniyle eksik değerler
@@ -92,9 +101,9 @@ ortalama ile doldurulmayacak, **kendi başına bir kategori** olarak modellenece
 - [x] Docker üzerinde PostgreSQL 16, tekrarlanabilir kurulum
 - [x] CSV başlıklarından otomatik `CREATE TABLE` üretimi (~350 kolon)
 - [x] `COPY` ile toplu yükleme + indeksler + `ANALYZE`
-- [x] `features.bureau_agg` — dış kredi geçmişinden 20 metrik
-- [ ] `previous_application`, `installments_payments`, `pos_cash_balance`, `credit_card_balance` öznitelikleri
-- [ ] Başvuru içi oran öznitelikleri (borç/gelir, taksit/gelir, kredi/teminat)
+- [x] 5 öznitelik tablosu: dış kredi geçmişi, geçmiş başvurular, taksit ödemeleri, POS/nakit kredi, kredi kartı
+- [x] Başvuru içi oran öznitelikleri (kredi/gelir, DTI, LTV, kişi başı gelir, dış skor özetleri)
+- [x] `features.model_input` — 307.511 satır × 230 kolon, müşteri başına tek satır
 - [ ] WOE dönüşümü + lojistik regresyon scorecard
 - [ ] XGBoost karşılaştırması, Gini / KS
 - [ ] SHAP ile açıklanabilirlik
