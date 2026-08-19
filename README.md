@@ -111,10 +111,12 @@ ortalama ile doldurulmayacak, **kendi başına bir kategori** olarak modellenece
 **Gereksinimler:** Docker, Python 3.11+, Kaggle hesabı
 
 ```bash
-git clone <repo-url>
-cd credit-risk-platform
-cp .env.example .env          # şifreyi düzenle
+git clone https://github.com/0busrayavuz/credit-risk-scoring-platform.git
+cd credit-risk-scoring-platform
 ```
+
+`.env.example` dosyasını `.env` adıyla kopyalayıp şifreyi düzenleyin
+(Windows: `copy .env.example .env` · Linux/macOS: `cp .env.example .env`).
 
 Veriyi indir:
 
