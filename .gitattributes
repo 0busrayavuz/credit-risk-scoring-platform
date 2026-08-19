@@ -1,0 +1,15 @@
+# Satir sonu karakterlerini normalize eder.
+# Windows CRLF (\r\n), Linux/macOS LF (\n) kullanir. Bu ayar olmadan
+# repo iki bicimi karisik tutar; farkli isletim sistemlerinden calisan
+# kisiler arasinda "dosyanin tamami degismis" gorunen sahte diff'ler cikar.
+# Kural: depoda her zaman LF sakla, calisma kopyasinda isletim sistemine birak.
+* text=auto eol=lf
+
+# Ikili dosyalar - dokunma
+*.png  binary
+*.jpg  binary
+*.pdf  binary
+*.xlsx binary
+*.pbix binary
+*.pkl  binary
+*.joblib binary

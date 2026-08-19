@@ -1,10 +1,13 @@
 # Sirlar
 .env
 
-# Ham ve islenmis veri (GitHub'a 700 MB CSV yuklenmez)
-data/raw/
-data/processed/
-data/interim/
+# Ham ve islenmis veri (2,5 GB - GitHub'a veri yuklenmez).
+# Klasorlerin ICERIGI dislanir ama .gitkeep dosyalarina izin verilir;
+# boylece repoyu klonlayan kisi hazir klasor yapisini bulur.
+data/raw/*
+data/processed/*
+data/interim/*
+!data/*/.gitkeep
 
 # Python
 __pycache__/

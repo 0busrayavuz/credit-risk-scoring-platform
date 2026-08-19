@@ -47,25 +47,66 @@ Ham veri repoda tutulmaz (`.gitignore`); Kaggle'dan indirilip `data/raw/` altın
 
 ## Mimari
 
-```
-  CSV (2,5 GB)
-       │  COPY  (58,5M satır / ~74 sn)
-       ▼
-  ┌──────────────┐    şema veriden otomatik üretilir
-  │  raw şeması  │    → src/generate_ddl.py
-  └──────┬───────┘
-         │  SQL ile öznitelik üretimi
-         ▼
-  ┌──────────────┐    müşteri başına tek satır
-  │features şema.│
-  └──────┬───────┘
-         ▼
-   Model  →  Açıklanabilirlik  →  Kâr bazlı eşik  →  API + Panel
+```mermaid
+flowchart TD
+    A["<b>Ham CSV</b><br/>8 dosya · 2,5 GB · 58,5M satır"]
+    B["<b>raw şeması</b><br/>şema CSV başlıklarından otomatik üretilir"]
+    C["<b>features şeması</b><br/>5 özet tablo — müşteri başına toplanır"]
+    D["<b>features.model_input</b><br/>307.511 satır × 230 kolon"]
+    E["<b>Model</b><br/>WOE scorecard + XGBoost"]
+    F["<b>SHAP</b><br/>açıklanabilirlik"]
+    G["<b>Kâr bazlı kesim noktası</b>"]
+    H["<b>FastAPI</b> servisi + <b>Power BI</b> paneli"]
+
+    A -->|"COPY · ~74 sn"| B
+    B -->|"SQL ile öznitelik üretimi"| C
+    C -->|"LEFT JOIN"| D
+    D --> E --> F --> G --> H
+
+    style D fill:#2d6a4f,stroke:#1b4332,color:#fff
+    style E fill:#1d3557,stroke:#14213d,color:#fff
 ```
 
 **Tasarım kararı:** Öznitelik üretimi pandas yerine **SQL'de**, veritabanının içinde
 yapılır. 58,5 milyon satırı Python'a taşımak yerine hesaplamayı verinin yanına
 götürmek hem çok daha hızlıdır hem de üretim ortamlarındaki gerçek pratiktir.
+
+### Öznitelik tabloları
+
+| Tablo | Kaynak | Neyi ölçüyor | Müşteri |
+|---|---|---|---:|
+| `bureau_agg` | bureau + bureau_balance (27M) | Diğer kuruluşlardaki kredi ve gecikme geçmişi | 305.811 |
+| `previous_app_agg` | previous_application | Geçmiş başvurular, red oranı ve red sebepleri | 338.857 |
+| `installments_agg` | installments_payments (13,6M) | Fiili taksit ödeme davranışı, gecikme oranı | 339.587 |
+| `pos_cash_agg` | pos_cash_balance (10M) | Taksitli/nakit kredilerin aylık durumu | 337.252 |
+| `credit_card_agg` | credit_card_balance (3,8M) | Limit kullanımı, nakit avans, asgari ödeme | 103.558 |
+
+Her öznitelik, eklenmeden önce hedef değişkene karşı dilimlenerek **monotonluk
+açısından test edilmiştir**. Testte bir kırılma bulunan `inst_dpd_max` (en uzun
+gecikme) özniteliği elenmemiş, ancak seçilim etkisi nedeniyle güvenilmez olduğu
+notlanmış ve yerine oran tabanlı karşılığı öne çıkarılmıştır.
+
+## Proje yapısı
+
+```
+credit-risk-platform/
+├── docker/
+│   └── docker-compose.yml          PostgreSQL 16 + kalıcı volume + CSV mount
+├── src/
+│   └── generate_ddl.py             CSV başlıklarından CREATE TABLE üretir
+├── sql/
+│   ├── 00_init/                    şema tanımı (otomatik üretilir)
+│   ├── 01_staging/                 COPY ile yükleme + indeksler
+│   └── 02_features/                öznitelik üretimi (SQL)
+├── notebooks/                      modelleme ve analiz
+├── models/                         eğitilmiş model dosyaları
+├── reports/                        çıktılar ve grafikler
+├── data/raw/                       ham CSV (repoda tutulmaz)
+├── .env.example                    ortam değişkeni şablonu
+└── requirements.txt
+```
+
+SQL dosyaları **numaralandırılmıştır**; sıra, çalıştırma sırasıdır.
 
 ---
 
