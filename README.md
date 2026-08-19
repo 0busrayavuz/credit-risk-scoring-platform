@@ -157,6 +157,36 @@ Puan bandına göre gerçekleşen temerrüt (yüksek puan = düşük risk):
 | 657 – 680 | 1.009 | %0,89 |
 | 680 – 703 | 49 | %0,00 |
 
+## Kâr bazlı kesim noktası
+
+Bir modelin değeri AUC ile değil, ürettiği kararla ölçülür. Kredi riskinde iki hatanın
+maliyeti simetrik değildir: batan bir kredinin anaparası, iyi bir müşteriden yıllar
+içinde kazanılan marjın çok üzerindedir. Bu yüzden yaygın "olasılık 0,5'i geçerse
+reddet" kuralı yanlıştır — o eşik, iki hatanın eşit maliyetli olduğunu varsayar.
+
+Eşik **doğrulama** kümesinde kâr fonksiyonu maksimize edilerek seçildi, sonuç
+**test** kümesinde raporlandı.
+
+![Kâr eğrisi](reports/kar_egrisi.png)
+
+Test kümesi (61.503 başvuru · marj %12 · LGD %65 varsayımıyla):
+
+| Senaryo | Onay oranı | Onaylananlarda temerrüt | Portföy kârı |
+|---|---:|---:|---:|
+| Model yok — herkese onay | %100 | %8,07 | 2,31 milyar |
+| Sabit 0,50 eşiği | %99,3 | %7,72 | 2,38 milyar |
+| WOE scorecard — optimum (0,152) | %85,8 | %5,33 | 2,61 milyar |
+| **XGBoost — optimum (0,135)** | **%83,1** | **%4,71** | **2,68 milyar** |
+
+**Projenin en önemli bulgusu:** model yükseltmesi (scorecard → XGBoost) +64 milyon
+katkı sağlarken, eşik kararı (0,50 → 0,135) **+300 milyon** katkı sağlıyor.
+Eşiği doğru seçmek, modeli yükseltmekten yaklaşık **beş kat** daha değerli.
+Varsayılan 0,5 eşiğiyle çalışan bir sistem, başvuruların %99,3'ünü onaylar ve
+modelin sunduğu değerin neredeyse tamamını kullanmadan bırakır.
+
+Marj ve LGD birer varsayımdır; 5×5'lik bir duyarlılık analizi ile optimum eşiğin
+bu varsayımlara bağlılığı ölçülmüştür (onay oranı %64–%97 aralığında değişiyor).
+
 ### Değişken seçimi: üç aşamalı ve denetlenebilir
 
 Skorkartın bankada kullanılabilmesi için istatistiksel başarı yetmez; **her
@@ -186,9 +216,9 @@ Her eğitimde bu denetim otomatik çalışır; yön bozulursa süreç hata verer
 - [x] Başvuru içi oran öznitelikleri (kredi/gelir, DTI, LTV, kişi başı gelir, dış skor özetleri)
 - [x] `features.model_input` — 307.511 satır × 230 kolon, müşteri başına tek satır
 - [x] WOE dönüşümü + lojistik regresyon scorecard (Gini 0,527 · KS 0,400)
-- [ ] XGBoost karşılaştırması
+- [x] XGBoost karşılaştırması (Gini 0,566 · KS 0,434)
+- [x] Kâr bazlı kesim noktası optimizasyonu + duyarlılık analizi
 - [ ] SHAP ile açıklanabilirlik
-- [ ] Kâr bazlı kesim noktası optimizasyonu
 - [ ] PSI ile popülasyon kayması izleme
 - [ ] MLflow ile deney takibi
 - [ ] FastAPI skorlama servisi
