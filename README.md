@@ -137,6 +137,46 @@ ortalama ile doldurulmayacak, **kendi başına bir kategori** olarak modellenece
 
 ---
 
+## Model sonuçları
+
+Doğrulama kümesi (61.502 başvuru, eğitimde kullanılmadı):
+
+| Model | AUC | Gini | KS | PR-AUC | Değişken |
+|---|---:|---:|---:|---:|---:|
+| Tek değişken (`ext_source_mean`) | 0,7135 | 0,4271 | 0,3248 | 0,1866 | 1 |
+| Lojistik regresyon | 0,7305 | 0,4611 | 0,3459 | 0,2066 | 10 |
+| **WOE scorecard** | **0,7634** | **0,5268** | **0,4004** | **0,2382** | **54** |
+
+Puan bandına göre gerçekleşen temerrüt (yüksek puan = düşük risk):
+
+| Puan bandı | Müşteri | Temerrüt |
+|---|---:|---:|
+| 474 – 497 | 30 | %66,67 |
+| 520 – 543 | 2.285 | %30,85 |
+| 589 – 612 | 17.675 | %4,82 |
+| 657 – 680 | 1.009 | %0,89 |
+| 680 – 703 | 49 | %0,00 |
+
+### Değişken seçimi: üç aşamalı ve denetlenebilir
+
+Skorkartın bankada kullanılabilmesi için istatistiksel başarı yetmez; **her
+satırının iş mantığına uygun olması** gerekir. İlk denemede IV'ye göre seçilen
+108 değişkenin 35'inde katsayı işareti ters çıktı — örneğin kredi kartı limit
+kullanımı arttıkça müşteri daha çok puan alıyordu. Sebep çoklu doğrusal
+bağlantıydı (`age_years` ile `days_birth` arasında r = 0,999 gibi).
+
+Bunun üzerine üç aşamalı bir seçim süreci kuruldu:
+
+```
+228 değişken
+  → 108   IV filtresi (0,02 – 0,60)
+  →  65   korelasyon budama (|r| > 0,75 olan çiftlerden IV'si düşük olan elenir)
+  →  54   işaret düzeltme (katsayısı iş mantığına aykırı olanlar yinelemeli elenir)
+```
+
+Sonuç: **54/54 değişkende puanlar doğru yönde**, AUC kaybı yalnızca 0,0019.
+Her eğitimde bu denetim otomatik çalışır; yön bozulursa süreç hata vererek durur.
+
 ## Yol haritası
 
 - [x] Docker üzerinde PostgreSQL 16, tekrarlanabilir kurulum
@@ -145,8 +185,8 @@ ortalama ile doldurulmayacak, **kendi başına bir kategori** olarak modellenece
 - [x] 5 öznitelik tablosu: dış kredi geçmişi, geçmiş başvurular, taksit ödemeleri, POS/nakit kredi, kredi kartı
 - [x] Başvuru içi oran öznitelikleri (kredi/gelir, DTI, LTV, kişi başı gelir, dış skor özetleri)
 - [x] `features.model_input` — 307.511 satır × 230 kolon, müşteri başına tek satır
-- [ ] WOE dönüşümü + lojistik regresyon scorecard
-- [ ] XGBoost karşılaştırması, Gini / KS
+- [x] WOE dönüşümü + lojistik regresyon scorecard (Gini 0,527 · KS 0,400)
+- [ ] XGBoost karşılaştırması
 - [ ] SHAP ile açıklanabilirlik
 - [ ] Kâr bazlı kesim noktası optimizasyonu
 - [ ] PSI ile popülasyon kayması izleme

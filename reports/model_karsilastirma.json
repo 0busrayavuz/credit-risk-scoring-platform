@@ -1,0 +1,32 @@
+[
+  {
+    "model":"tek degisken (ext_source_mean)",
+    "auc":0.7135445527,
+    "gini":0.4270891055,
+    "ks":0.3247832409,
+    "pr_auc":0.186621678,
+    "brier":null,
+    "n":61502,
+    "temerrut_orani":0.080729082
+  },
+  {
+    "model":"lojistik regresyon (10 degisken)",
+    "auc":0.7305298078,
+    "gini":0.4610596157,
+    "ks":0.3458570643,
+    "pr_auc":0.2065615077,
+    "brier":0.069618563,
+    "n":61502,
+    "temerrut_orani":0.080729082
+  },
+  {
+    "model":"WOE scorecard (54 degisken)",
+    "auc":0.7634154685,
+    "gini":0.526830937,
+    "ks":0.4003547161,
+    "pr_auc":0.2382049807,
+    "brier":0.0679964049,
+    "n":61502,
+    "temerrut_orani":0.080729082
+  }
+]

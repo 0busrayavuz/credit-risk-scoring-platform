@@ -18,7 +18,12 @@ matplotlib>=3.8
 seaborn>=0.13
 
 # --- Asama 3: modelleme ---
-scikit-learn>=1.5     # baseline lojistik regresyon, metrikler, split
+# DIKKAT - surum ust siniri bilincli:
+# scikit-learn 1.8'de check_array'in 'force_all_finite' parametresi kaldirildi
+# (yeni adi 'ensure_all_finite'). optbinning 0.20 hala eski adi cagiriyor,
+# dolayisiyla sklearn >= 1.8 ile birlikte calismiyor.
+# optbinning bu cagriyi guncelleyene kadar ust sinir kalmali.
+scikit-learn>=1.5,<1.8   # baseline lojistik regresyon, metrikler, split
 xgboost>=2.1          # gradyan artirmali agaclar
 shap>=0.46            # model aciklanabilirligi
 optbinning>=0.19      # WOE / optimal binning (scorecard icin)
