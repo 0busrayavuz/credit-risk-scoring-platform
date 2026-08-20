@@ -143,19 +143,22 @@ Doğrulama kümesi (61.502 başvuru, eğitimde kullanılmadı):
 
 | Model | AUC | Gini | KS | PR-AUC | Değişken |
 |---|---:|---:|---:|---:|---:|
-| Tek değişken (`ext_source_mean`) | 0,7135 | 0,4271 | 0,3248 | 0,1866 | 1 |
-| Lojistik regresyon | 0,7305 | 0,4611 | 0,3459 | 0,2066 | 10 |
-| **WOE scorecard** | **0,7634** | **0,5268** | **0,4004** | **0,2382** | **54** |
+| Tek değişken (`ext_source_mean`) | 0,7150 | 0,4300 | 0,3253 | 0,1906 | 1 |
+| Lojistik regresyon | 0,7355 | 0,4710 | 0,3492 | 0,2119 | 10 |
+| **WOE scorecard** | 0,7640 | 0,5279 | 0,3973 | 0,2421 | 52 |
+| **XGBoost** | **0,7828** | **0,5655** | **0,4295** | **0,2690** | 228 |
 
-Puan bandına göre gerçekleşen temerrüt (yüksek puan = düşük risk):
+Aşırı öğrenme kontrolü (XGBoost): eğitim 0,8666 · doğrulama 0,7828 · **test 0,7832**.
+Test ile doğrulamanın örtüşmesi, bölmenin sızıntısız olduğunun doğrudan kanıtıdır.
+
+Scorecard puan bandına göre gerçekleşen temerrüt (yüksek puan = düşük risk):
 
 | Puan bandı | Müşteri | Temerrüt |
 |---|---:|---:|
-| 474 – 497 | 30 | %66,67 |
-| 520 – 543 | 2.285 | %30,85 |
-| 589 – 612 | 17.675 | %4,82 |
-| 657 – 680 | 1.009 | %0,89 |
-| 680 – 703 | 49 | %0,00 |
+| 481 – 503 | 66 | %57,58 |
+| 524 – 546 | 2.777 | %29,24 |
+| 588 – 610 | 16.618 | %4,92 |
+| 653 – 674 | 1.325 | %0,91 |
 
 ## Kâr bazlı kesim noktası
 
@@ -173,19 +176,22 @@ Test kümesi (61.503 başvuru · marj %12 · LGD %65 varsayımıyla):
 
 | Senaryo | Onay oranı | Onaylananlarda temerrüt | Portföy kârı |
 |---|---:|---:|---:|
-| Model yok — herkese onay | %100 | %8,07 | 2,31 milyar |
-| Sabit 0,50 eşiği | %99,3 | %7,72 | 2,38 milyar |
-| WOE scorecard — optimum (0,152) | %85,8 | %5,33 | 2,61 milyar |
-| **XGBoost — optimum (0,135)** | **%83,1** | **%4,71** | **2,68 milyar** |
+| Model yok — herkese onay | %100 | %8,07 | 2,27 milyar |
+| Sabit 0,50 eşiği | %99,3 | %7,71 | 2,34 milyar |
+| WOE scorecard — optimum (0,142) | %84,3 | %5,09 | 2,60 milyar |
+| **XGBoost — optimum (0,152)** | **%85,9** | **%5,03** | **2,65 milyar** |
 
-**Projenin en önemli bulgusu:** model yükseltmesi (scorecard → XGBoost) +64 milyon
-katkı sağlarken, eşik kararı (0,50 → 0,135) **+300 milyon** katkı sağlıyor.
+**Projenin en önemli bulgusu:** model yükseltmesi (scorecard → XGBoost) +57 milyon
+katkı sağlarken, eşik kararı (0,50 → 0,152) **+310 milyon** katkı sağlıyor.
 Eşiği doğru seçmek, modeli yükseltmekten yaklaşık **beş kat** daha değerli.
-Varsayılan 0,5 eşiğiyle çalışan bir sistem, başvuruların %99,3'ünü onaylar ve
+Varsayılan 0,5 eşiğiyle çalışan bir sistem başvuruların %99,3'ünü onaylar ve
 modelin sunduğu değerin neredeyse tamamını kullanmadan bırakır.
 
+Optimum eşikte 2.305 batık kredi önleniyor, karşılığında 6.350 iyi müşteri
+reddediliyor. Bu takas kâr fonksiyonu tarafından, sezgiyle değil hesapla belirlenir.
+
 Marj ve LGD birer varsayımdır; 5×5'lik bir duyarlılık analizi ile optimum eşiğin
-bu varsayımlara bağlılığı ölçülmüştür (onay oranı %64–%97 aralığında değişiyor).
+bu varsayımlara bağlılığı ölçülmüştür (onay oranı %59–%98 aralığında değişiyor).
 
 ## Model adaleti ve regülasyon uyumu
 
@@ -197,11 +203,11 @@ yasağına tabidir. Bulgu ölçüldü ve giderildi.
 
 ![Adalet analizi](reports/adalet_analizi.png)
 
-**Maliyet ihmal edilebilir.** Değişken çıkarıldığında AUC 0,7830 → 0,7816
-(−0,0013), portföy kârı 2,68 → 2,67 milyar (−%0,18).
+**Maliyet ihmal edilebilir.** Değişken çıkarıldığında AUC 0,7828 → 0,7815
+(−0,0013), portföy kârı üzerindeki etki −1,9 milyon (−%0,07).
 
 **Ancak kolonu silmek tek başına yetmiyor.** Kalan 227 değişkenden cinsiyet
-**AUC 0,911** ile tahmin edilebiliyor. En güçlü vekil, açık farkla araba
+**AUC 0,909** ile tahmin edilebiliyor. En güçlü vekil, açık farkla araba
 sahipliği (`flag_own_car`); ardından meslek ve gelir geliyor. Bu nedenle
 grup bazlı adalet metrikleri izlemeye devam edilmelidir — hassas değişkeni
 silip "model artık adil" demek, ayrımcılığı yok etmez, yalnızca ölçülemez hâle
@@ -209,13 +215,15 @@ getirir.
 
 | Ölçüt | Cinsiyetli | Cinsiyetsiz | |
 |---|---:|---:|---|
-| Onay oranı farkı (demographic parity) | %9,68 | %6,35 | iyileşti |
-| Ödeyecek müşterinin reddedilme farkı (equal opportunity) | %8,41 | %5,13 | iyileşti |
-| Onaylananlarda temerrüt farkı (predictive parity) | %0,91 | %1,18 | kötüleşti |
+| Onay oranı farkı (demographic parity) | %8,28 | %5,73 | iyileşti |
+| Ödeyecek müşterinin reddedilme farkı (equal opportunity) | %6,74 | %4,32 | iyileşti |
+| Onaylananlarda temerrüt farkı (predictive parity) | %1,30 | %1,59 | kötüleşti |
+
+Erkeklerde "ödeyecekken reddedilme" oranı %15,7'den %12,9'a düştü.
 
 Üçüncü ölçütün kötüleşmesi bir kusur değil, **imkânsızlık teoreminin** sonucudur
 (Kleinberg ve ark.; Chouldechova, 2016–17): grupların gerçek temerrüt oranları
-farklıyken (kadın %7,16, erkek %9,82) bir model aynı anda hem eşit hata oranlarına
+farklıyken (kadın %6,99, erkek %10,17) bir model aynı anda hem eşit hata oranlarına
 hem eşit isabet oranına sahip olamaz. Bu projede **equal opportunity** ölçütü
 tercih edilmiştir: *ödeyecek bir müşterinin reddedilme olasılığı cinsiyetine
 bağlı olmamalıdır.* Bu ölçüt, kimseye hak etmediği krediyi vermeyi gerektirmediği
@@ -233,13 +241,17 @@ Bunun üzerine üç aşamalı bir seçim süreci kuruldu:
 
 ```
 228 değişken
-  → 108   IV filtresi (0,02 – 0,60)
-  →  65   korelasyon budama (|r| > 0,75 olan çiftlerden IV'si düşük olan elenir)
-  →  54   işaret düzeltme (katsayısı iş mantığına aykırı olanlar yinelemeli elenir)
+  → 104   IV filtresi (0,02 – 0,60)
+  →  64   korelasyon budama (|r| > 0,75 olan çiftlerden IV'si düşük olan elenir)
+  →  52   işaret düzeltme (katsayısı iş mantığına aykırı olanlar yinelemeli elenir)
 ```
 
-Sonuç: **54/54 değişkende puanlar doğru yönde**, AUC kaybı yalnızca 0,0019.
-Her eğitimde bu denetim otomatik çalışır; yön bozulursa süreç hata vererek durur.
+Korelasyon budamasının yakaladığı örnekler: `age_years` ↔ `days_birth` (r = 0,999 —
+birebir aynı bilgi), `region_rating_client` ↔ `region_rating_client_w_city` (0,954),
+`inst_late_count_1y` ↔ `inst_late_ratio_1y` (0,919).
+
+Sonuç: **52/52 değişkende puanlar doğru yönde.** Her eğitimde bu denetim otomatik
+çalışır; yön bozulursa süreç hata vererek durur.
 
 ## Skorlama servisi (FastAPI)
 
@@ -308,6 +320,64 @@ python -m pytest tests -v
 sırasına göre sıralanması, veri kalitesi korumasının devreye girmesi ve
 beklenen eksiklerin yanlış alarm üretmemesi.
 
+## Model izleme (PSI)
+
+*"Modelin altı ay sonra bozulduğunu nasıl anlarsın?"*
+
+AUC ile anlayamazsınız — AUC hesaplamak için kimin ödediğini bilmeniz gerekir,
+bir tüketici kredisinin temerrüde düşmesi ise 12–24 ay sürer. O sırada model
+bozuk çalışıyorsa zarar çoktan yazılmıştır.
+
+**PSI (Population Stability Index) sonuç gerektirmez.** Bugün gelen başvuruların
+dağılımını, modelin eğitildiği dağılımla karşılaştırır ve başvurular geldiği gün
+hesaplanır. Bu yüzden PSI bir *öncü göstergedir*, AUC ise gecikmeli.
+
+![PSI izleme](reports/psi_izleme.png)
+
+Veri setinde başvuru tarihi bulunmadığından gerçek bir zaman kayması
+gösterilemez; bunun yerine iktisadi olarak tutarlı **senaryolar** simüle
+edilmiştir (gelir değiştiğinde ona bağlı oranlar da yeniden hesaplanır):
+
+| Senaryo | Skor PSI | AUC | Ortalama tahmin | Durum |
+|---|---:|---:|---:|---|
+| Gerçek test kümesi (kayma yok) | 0,0003 | 0,7832 | %7,95 | kayma yok |
+| Genç müşteri kampanyası | 0,0036 | 0,7792 | %8,05 | kayma yok |
+| Hafif durgunluk | 0,0293 | 0,7822 | %9,08 | kayma yok |
+| **Şiddetli durgunluk** | **0,2121** | 0,7814 | **%11,02** | orta — izle |
+
+Kaymanın olmadığı durumda PSI'nin 0,0003 çıkması, ölçünün kendisinin doğru
+çalıştığının kanıtıdır.
+
+**Kritik gözlem:** şiddetli durgunlukta PSI 0,21'e çıkarken AUC neredeyse hiç
+değişmiyor (0,7832 → 0,7814), ancak ortalama tahmin %7,95'ten %11,02'ye
+yükseliyor. Model **ayırt etme gücünü koruyor ama kalibrasyonu kayıyor** —
+sıralaması hâlâ doğru, fakat "%10 risk" dediği müşteriler artık daha yüksek
+oranda batıyor. Kâr bazlı eşik kalibre olasılıklara dayandığı için, PSI sinyal
+verdiğinde **eşiğin de yeniden hesaplanması** gerekir. Yalnızca AUC izleyen bir
+sistem bu durumu hiç fark etmezdi.
+
+## Doğrulama ve tekrarlanabilirlik
+
+Geliştirme sırasında gerçek bir **veri sızıntısı** yakalandı ve giderildi.
+Bulgu, hem yöntemin hem de sonuçların güvenilirliği açısından burada açıkça
+belgelenmiştir.
+
+`SELECT * FROM features.model_input` sorgusunda `ORDER BY` yoktu. SQL, `ORDER BY`
+olmadan satır sırasını garanti etmez; indeks eklenmesi ve `ANALYZE` çalıştırılması
+sorgu planını değiştirdiğinde satırlar farklı sırada gelmeye başladı. Eğitim/test
+bölmesi sabit tohumlu `train_test_split` ile yapıldığı için — ki bu **aynı girdi
+sırasını** aynı şekilde böler — bölme değişti ve eğitim verisi test kümesine
+sızdı. Belirti: test AUC'sinin doğrulama AUC'sinden **yüksek** çıkması (0,84 vs 0,78).
+
+Hiçbir hata mesajı oluşmadı; sonuçlar yalnızca olduğundan iyi göründü.
+
+**Giderme:** sorguya `ORDER BY sk_id_curr` eklendi ve `veri_bol` içinde de
+savunma amaçlı sıralama yapıldı; böylece bölme, verinin hangi sırayla okunduğundan
+bağımsız hâle geldi. `tests/test_veri_bolme.py` içindeki beş test bunu doğrular —
+en önemlisi, kasıtlı olarak karıştırılmış bir DataFrame'in **aynı** bölmeyi
+üretmesini kontrol eden test. Tüm modeller ve raporlar düzeltmeden sonra
+yeniden üretilmiştir.
+
 ## Yol haritası
 
 - [x] Docker üzerinde PostgreSQL 16, tekrarlanabilir kurulum
@@ -322,7 +392,7 @@ beklenen eksiklerin yanlış alarm üretmemesi.
 - [x] SHAP ile açıklanabilirlik (global denetim + tekil karar gerekçesi)
 - [x] Model adaleti: hassas değişken denetimi, vekil sızıntı testi, grup metrikleri
 - [x] FastAPI skorlama servisi (SHAP gerekçeli, veri kalitesi denetimli) + testler
-- [ ] PSI ile popülasyon kayması izleme
+- [x] PSI ile popülasyon kayması izleme (senaryo analizi)
 - [ ] Power BI izleme paneli
 - [ ] MLflow ile deney takibi
 

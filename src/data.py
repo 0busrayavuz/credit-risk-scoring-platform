@@ -51,7 +51,16 @@ def model_input_yukle(limit: int | None = None, bellek_optimize: bool = True) ->
         dusurmek bunu yariya indirir ve model dogrulugunu pratikte etkilemez -
         kredi skorlamada 7 ondalik basamak hassasiyete ihtiyac yoktur.
     """
-    sql = "SELECT * FROM features.model_input"
+    # ORDER BY SART - opsiyonel degil.
+    # SQL, ORDER BY olmadan satir sirasini GARANTI ETMEZ. Sorgu plani
+    # degistiginde (indeks eklendiginde, ANALYZE calistiginda, sunucu yeniden
+    # basladiginda) ayni sorgu satirlari farkli sirada dondurebilir.
+    # Bolme sabit bir tohuma dayandigi icin, sira degisirse BOLME DE DEGISIR
+    # ve egitim verisi test kumesine sizar.
+    # Bu proje icinde birebir yasandi: modeller bir bolmeyle egitildi, sonraki
+    # calistirmalarda baska bir bolmeyle degerlendirildi ve test AUC'si
+    # 0.78'den 0.84'e "yukseldi" - iyilesme degil, sizinti.
+    sql = "SELECT * FROM features.model_input ORDER BY sk_id_curr"
     if limit:
         sql += f" LIMIT {int(limit)}"
 
@@ -109,7 +118,17 @@ def veri_bol(df: pd.DataFrame, random_state: int = RANDOM_STATE):
         Temerrut orani %8. Rastgele bolmede bir parcaya %6, digerine %10
         dusebilir ve karsilastirmalar anlamsizlasir. stratify, hedef
         dagilimini uc parcada da ayni tutar.
+
+    SIRALAMA - tekrarlanabilirligin temeli:
+        train_test_split sabit tohumla ayni GIRDI SIRASINI ayni sekilde boler.
+        Girdi sirasi degisirse bolme de degisir. Veritabanindan gelen satir
+        sirasi garanti degildir, bu yuzden burada sk_id_curr'a gore ACIKCA
+        siraliyoruz. Boylece bolme, verinin nasil okundugundan bagimsiz olarak
+        her zaman ayni cikar.
     """
+    # Savunma amacli: cagiran taraf sirasiz bir DataFrame verse bile bolme
+    # deterministik kalsin.
+    df = df.sort_values(ID_COL).reset_index(drop=True)
     y = df[TARGET]
 
     # Once test'i ayir.

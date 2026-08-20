@@ -4,15 +4,15 @@
     "lgd": 0.65
   },
   "optimum_esik": {
-    "scorecard": 0.15213032581453634,
-    "xgboost": 0.13467418546365914
+    "scorecard": 0.14215538847117795,
+    "xgboost": 0.15213032581453634
   },
   "test_sonuclari": {
     "model yok - herkese onay": {
       "esik": 1.01,
       "onay_orani": 1.0,
-      "kar": 2313625847.175,
-      "kar_basvuri": 37618.097445246574,
+      "kar": 2274784176.465,
+      "kar_basvuri": 36986.556370664846,
       "onaylanan": 61503,
       "onaylananda_temerrut": 0.08072776937710356,
       "kacirilan_iyi": 0,
@@ -20,33 +20,33 @@
     },
     "sabit 0.50 esigi (XGBoost)": {
       "esik": 0.5,
-      "onay_orani": 0.9929271742841813,
-      "kar": 2382968772.405,
-      "kar_basvuri": 38745.569686112874,
-      "onaylanan": 61068,
-      "onaylananda_temerrut": 0.07722538809196305,
-      "kacirilan_iyi": 186,
-      "onlenen_batik": 249
+      "onay_orani": 0.9926507650033332,
+      "kar": 2344651488.765,
+      "kar_basvuri": 38122.55481464318,
+      "onaylanan": 61051,
+      "onaylananda_temerrut": 0.07711585395816613,
+      "kacirilan_iyi": 195,
+      "onlenen_batik": 257
     },
     "WOE scorecard - optimum": {
-      "esik": 0.15213032581453634,
-      "onay_orani": 0.8580557045997756,
-      "kar": 2613191112.99,
-      "kar_basvuri": 42488.83978001073,
-      "onaylanan": 52773,
-      "onaylananda_temerrut": 0.053322721846398725,
-      "kacirilan_iyi": 6579,
-      "onlenen_batik": 2151
+      "esik": 0.14215538847117795,
+      "onay_orani": 0.8430483065866705,
+      "kar": 2595259173.2849994,
+      "kar_basvuri": 42197.277747183056,
+      "onaylanan": 51850,
+      "onaylananda_temerrut": 0.050935390549662486,
+      "kacirilan_iyi": 7329,
+      "onlenen_batik": 2324
     },
     "XGBoost - optimum": {
-      "esik": 0.13467418546365914,
-      "onay_orani": 0.831195226249126,
-      "kar": 2677258854.5849996,
-      "kar_basvuri": 43530.5408611775,
-      "onaylanan": 51121,
-      "onaylananda_temerrut": 0.047084368459145945,
-      "kacirilan_iyi": 7824,
-      "onlenen_batik": 2558
+      "esik": 0.15213032581453634,
+      "onay_orani": 0.8592751573093995,
+      "kar": 2651890302.6299996,
+      "kar_basvuri": 43118.06420223403,
+      "onaylanan": 52848,
+      "onaylananda_temerrut": 0.05033303057826219,
+      "kacirilan_iyi": 6350,
+      "onlenen_batik": 2305
     }
   }
 }

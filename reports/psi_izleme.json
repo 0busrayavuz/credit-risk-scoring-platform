@@ -1,0 +1,50 @@
+[
+  {
+    "senaryo": "gercek_test",
+    "senaryo_ad": "Gerçek test kümesi (kayma yok)",
+    "skor_psi": 0.00029920125036445467,
+    "yorum": "kayma yok",
+    "auc": 0.7831717900644994,
+    "gini": 0.5663435801289989,
+    "ort_tahmin": 0.07947462052106857
+  },
+  {
+    "senaryo": "genc_musteri_kampanyasi",
+    "senaryo_ad": "Genç müşteri kampanyası",
+    "skor_psi": 0.003555602696996733,
+    "yorum": "kayma yok",
+    "auc": 0.779201365588694,
+    "gini": 0.558402731177388,
+    "ort_tahmin": 0.08049320429563522
+  },
+  {
+    "senaryo": "hafif_durgunluk",
+    "senaryo_ad": "Hafif durgunluk",
+    "skor_psi": 0.029258977174333074,
+    "yorum": "kayma yok",
+    "auc": 0.7822357923982861,
+    "gini": 0.5644715847965722,
+    "ort_tahmin": 0.09076987206935883
+  },
+  {
+    "senaryo": "siddetli_durgunluk",
+    "senaryo_ad": "Şiddetli durgunluk",
+    "skor_psi": 0.2120604889256972,
+    "yorum": "orta - izle",
+    "auc": 0.7813787780514756,
+    "gini": 0.5627575561029512,
+    "ort_tahmin": 0.1101905107498169
+  },
+  {
+    "degisken_psi_detay": {
+      "ext_source_mean": 1.2718963662629001,
+      "pos_remaining_avg": 0.00015384554076849165,
+      "credit_term": 0.00020749563567948738,
+      "credit_goods_ratio": 0.00015896272088588578,
+      "amt_annuity": 0.00020301379334332857,
+      "bureau_debt_ratio": 0.0001232988688474167,
+      "inst_amt_paid_sum": 0.0001533287187973299,
+      "inst_late_ratio_1y": 0.05125142263486564
+    }
+  }
+]
