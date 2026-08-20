@@ -1,0 +1,47 @@
+{
+  "ornek_sayisi": 8000,
+  "temel_deger_logodds": -2.4433445930480957,
+  "toplanabilirlik_sapmasi": 5.811452865600586e-07,
+  "en_onemli_10": [
+    {
+      "degisken": "ext_source_mean",
+      "ortalama_mutlak_shap": 0.42523297667503357
+    },
+    {
+      "degisken": "pos_remaining_avg",
+      "ortalama_mutlak_shap": 0.13074705004692078
+    },
+    {
+      "degisken": "credit_goods_ratio",
+      "ortalama_mutlak_shap": 0.11834070086479187
+    },
+    {
+      "degisken": "code_gender",
+      "ortalama_mutlak_shap": 0.11543254554271698
+    },
+    {
+      "degisken": "organization_type",
+      "ortalama_mutlak_shap": 0.10955847054719925
+    },
+    {
+      "degisken": "amt_annuity",
+      "ortalama_mutlak_shap": 0.09993547946214676
+    },
+    {
+      "degisken": "credit_term",
+      "ortalama_mutlak_shap": 0.09784445911645889
+    },
+    {
+      "degisken": "inst_late_ratio_1y",
+      "ortalama_mutlak_shap": 0.08155883103609085
+    },
+    {
+      "degisken": "own_car_age",
+      "ortalama_mutlak_shap": 0.07887454330921173
+    },
+    {
+      "degisken": "bureau_debt_ratio",
+      "ortalama_mutlak_shap": 0.07233787328004837
+    }
+  ]
+}

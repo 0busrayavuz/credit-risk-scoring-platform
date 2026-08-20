@@ -187,6 +187,40 @@ modelin sunduğu değerin neredeyse tamamını kullanmadan bırakır.
 Marj ve LGD birer varsayımdır; 5×5'lik bir duyarlılık analizi ile optimum eşiğin
 bu varsayımlara bağlılığı ölçülmüştür (onay oranı %64–%97 aralığında değişiyor).
 
+## Model adaleti ve regülasyon uyumu
+
+SHAP analizi, modelin **cinsiyeti (`code_gender`) 4. en önemli değişken** olarak
+kullandığını ortaya çıkardı (ortalama |SHAP| 0,1154 — toplam önemin %3'ü).
+Finansal hizmetlerde cinsiyete dayalı ayrım ABD'de Equal Credit Opportunity Act,
+AB'de 2004/113/EC direktifi ile yasaklanmıştır; Türkiye'de de bankalar ayrımcılık
+yasağına tabidir. Bulgu ölçüldü ve giderildi.
+
+![Adalet analizi](reports/adalet_analizi.png)
+
+**Maliyet ihmal edilebilir.** Değişken çıkarıldığında AUC 0,7830 → 0,7816
+(−0,0013), portföy kârı 2,68 → 2,67 milyar (−%0,18).
+
+**Ancak kolonu silmek tek başına yetmiyor.** Kalan 227 değişkenden cinsiyet
+**AUC 0,911** ile tahmin edilebiliyor. En güçlü vekil, açık farkla araba
+sahipliği (`flag_own_car`); ardından meslek ve gelir geliyor. Bu nedenle
+grup bazlı adalet metrikleri izlemeye devam edilmelidir — hassas değişkeni
+silip "model artık adil" demek, ayrımcılığı yok etmez, yalnızca ölçülemez hâle
+getirir.
+
+| Ölçüt | Cinsiyetli | Cinsiyetsiz | |
+|---|---:|---:|---|
+| Onay oranı farkı (demographic parity) | %9,68 | %6,35 | iyileşti |
+| Ödeyecek müşterinin reddedilme farkı (equal opportunity) | %8,41 | %5,13 | iyileşti |
+| Onaylananlarda temerrüt farkı (predictive parity) | %0,91 | %1,18 | kötüleşti |
+
+Üçüncü ölçütün kötüleşmesi bir kusur değil, **imkânsızlık teoreminin** sonucudur
+(Kleinberg ve ark.; Chouldechova, 2016–17): grupların gerçek temerrüt oranları
+farklıyken (kadın %7,16, erkek %9,82) bir model aynı anda hem eşit hata oranlarına
+hem eşit isabet oranına sahip olamaz. Bu projede **equal opportunity** ölçütü
+tercih edilmiştir: *ödeyecek bir müşterinin reddedilme olasılığı cinsiyetine
+bağlı olmamalıdır.* Bu ölçüt, kimseye hak etmediği krediyi vermeyi gerektirmediği
+için kredi riskinde en savunulabilir olanıdır.
+
 ### Değişken seçimi: üç aşamalı ve denetlenebilir
 
 Skorkartın bankada kullanılabilmesi için istatistiksel başarı yetmez; **her
@@ -218,7 +252,8 @@ Her eğitimde bu denetim otomatik çalışır; yön bozulursa süreç hata verer
 - [x] WOE dönüşümü + lojistik regresyon scorecard (Gini 0,527 · KS 0,400)
 - [x] XGBoost karşılaştırması (Gini 0,566 · KS 0,434)
 - [x] Kâr bazlı kesim noktası optimizasyonu + duyarlılık analizi
-- [ ] SHAP ile açıklanabilirlik
+- [x] SHAP ile açıklanabilirlik (global denetim + tekil karar gerekçesi)
+- [x] Model adaleti: hassas değişken denetimi, vekil sızıntı testi, grup metrikleri
 - [ ] PSI ile popülasyon kayması izleme
 - [ ] MLflow ile deney takibi
 - [ ] FastAPI skorlama servisi
