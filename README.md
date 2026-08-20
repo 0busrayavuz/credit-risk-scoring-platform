@@ -241,6 +241,73 @@ Bunun üzerine üç aşamalı bir seçim süreci kuruldu:
 Sonuç: **54/54 değişkende puanlar doğru yönde**, AUC kaybı yalnızca 0,0019.
 Her eğitimde bu denetim otomatik çalışır; yön bozulursa süreç hata vererek durur.
 
+## Skorlama servisi (FastAPI)
+
+```bash
+python -m uvicorn src.api:app --port 8010
+```
+
+Etkileşimli dokümantasyon: `http://localhost:8010/docs`
+
+| Uç nokta | İş |
+|---|---|
+| `GET /saglik` | Servis ve model durumu |
+| `GET /model` | Model kimliği, karar eşiği ve nasıl seçildiği |
+| `POST /skorla/musteri/{sk_id_curr}` | Özellikleri veritabanından okuyarak skorlar |
+| `POST /skorla` | Özellikleri istekte alarak skorlar (eksikler NaN) |
+
+Servis yalnızca skor değil, **kararın gerekçesini** de döner — reddedilen başvuru
+sahibine sebep bildirmek birçok ülkede yasal zorunluluktur:
+
+```json
+{
+  "sk_id_curr": 100002,
+  "temerrut_olasiligi": 0.380774,
+  "karar": "RED",
+  "esik": 0.1446,
+  "risk_bandi": "çok yüksek",
+  "guvenilirlik": "YUKSEK",
+  "uyarilar": [],
+  "gerekce": [
+    { "degisken": "ext_source_mean", "deger": "0.1618", "katki": 0.7547, "yon": "riski artırdı" },
+    { "degisken": "ext_source_min",  "deger": "0.0830", "katki": 0.2625, "yon": "riski artırdı" },
+    { "degisken": "ext_source_3",    "deger": "0.1394", "katki": 0.2030, "yon": "riski artırdı" }
+  ],
+  "kullanilan_degisken": 204,
+  "eksik_degisken": 23
+}
+```
+
+### İki skorlama yolu ve eğitim-servis tutarsızlığı
+
+Model 227 değişken ister, ancak bunların çoğu başvuru formunda bulunmaz —
+milyonlarca satırdan SQL ile türetilen özet metriklerdir. Bu, üretim ML'inin
+bilinen *feature store* problemidir ve servis her iki yaklaşımı da sunar:
+özellikleri veritabanından okumak (eğitimdeki hesaplamanın aynısı kullanılır) veya
+istekte almak (yeni müşteride de çalışır, ancak gönderen tarafın metrikleri aynı
+şekilde hesaplaması gerekir).
+
+İkinci yolun riski ölçüldü: yalnızca 10 özellik gönderilen bir istekte model
+**%88,53** temerrüt tahmin etti — ancak bunun büyük kısmı gerçek risk değil,
+boş bırakılan alanların yarattığı yapaylıktı (`organization_type`'ın boş olması
+tek başına **+2,75 log-odds** katkı üretti).
+
+Bu nedenle servise bir **veri kalitesi denetimi** eklendi. Denetim, eğitimde
+neredeyse hiç boş olmayan alanların boş gelmesine bakar; beklenen eksikler
+(müşterilerin %72'sinde bulunmayan kredi kartı metrikleri gibi) uyarı üretmez.
+Güvenilirlik düşükse servis otomatik karar vermez, **`İNCELE`** döndürerek
+başvuruyu insan incelemesine yönlendirir.
+
+### Testler
+
+```bash
+python -m pytest tests -v
+```
+
+9 bütünleşme testi: uç nokta sözleşmeleri, hata yönetimi, gerekçelerin etki
+sırasına göre sıralanması, veri kalitesi korumasının devreye girmesi ve
+beklenen eksiklerin yanlış alarm üretmemesi.
+
 ## Yol haritası
 
 - [x] Docker üzerinde PostgreSQL 16, tekrarlanabilir kurulum
@@ -254,10 +321,10 @@ Her eğitimde bu denetim otomatik çalışır; yön bozulursa süreç hata verer
 - [x] Kâr bazlı kesim noktası optimizasyonu + duyarlılık analizi
 - [x] SHAP ile açıklanabilirlik (global denetim + tekil karar gerekçesi)
 - [x] Model adaleti: hassas değişken denetimi, vekil sızıntı testi, grup metrikleri
+- [x] FastAPI skorlama servisi (SHAP gerekçeli, veri kalitesi denetimli) + testler
 - [ ] PSI ile popülasyon kayması izleme
-- [ ] MLflow ile deney takibi
-- [ ] FastAPI skorlama servisi
 - [ ] Power BI izleme paneli
+- [ ] MLflow ile deney takibi
 
 ---
 

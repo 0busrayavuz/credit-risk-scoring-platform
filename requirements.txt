@@ -27,3 +27,10 @@ scikit-learn>=1.5,<1.8   # baseline lojistik regresyon, metrikler, split
 xgboost>=2.1          # gradyan artirmali agaclar
 shap>=0.46            # model aciklanabilirligi
 optbinning>=0.19      # WOE / optimal binning (scorecard icin)
+
+# --- Asama 4: servis ---
+fastapi>=0.115        # skorlama API'si
+uvicorn[standard]>=0.32   # ASGI sunucusu
+pydantic>=2.9         # istek/yanit dogrulama
+httpx>=0.27           # API testleri icin istemci
+pytest>=8.3           # test kosucusu
