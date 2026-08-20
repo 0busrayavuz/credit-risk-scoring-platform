@@ -356,6 +356,51 @@ oranda batıyor. Kâr bazlı eşik kalibre olasılıklara dayandığı için, PS
 verdiğinde **eşiğin de yeniden hesaplanması** gerekir. Yalnızca AUC izleyen bir
 sistem bu durumu hiç fark etmezdi.
 
+## İzleme katmanı ve Power BI paneli
+
+Panel ham veriye değil, iş diliyle konuşan bir **anlam katmanına** (semantic layer)
+bağlanır. Böylece "onay oranı" gibi tanımlar SQL'de bir kez yapılır; her raporda
+yeniden yazılıp birbirini tutmaz hâle gelmez.
+
+`src/izleme_tablosu.py`, tüm portföyü skorlayıp `monitoring.skor_portfoy`
+tablosunu üretir (307.511 satır × 19 kolon: skor, karar, risk bandı, beklenen kâr
+ve segment alanları). Üzerine beş görünüm kurulur:
+
+| Görünüm | İçerik |
+|---|---|
+| `v_kpi` | Onay oranı, onaylananlarda/reddedilenlerde temerrüt, önlenen batık, kâr |
+| `v_dilim_performans` | Risk dilimi bazında lift ve **kalibrasyon farkı** |
+| `v_segment_performans` | Yaş, gelir, eğitim, meslek, cinsiyet vb. tüm segmentler tek görünümde |
+| `v_karar_matrisi` | Doğru onay / hatalı onay / doğru red / hatalı red dağılımı |
+| `v_risk_bandi` | İş diliyle risk bandı özeti |
+
+Test kümesindeki sonuç, modelin değerini iş diliyle özetler:
+
+| Küme | Onay oranı | Onaylananlarda temerrüt | Reddedilenlerde temerrüt |
+|---|---:|---:|---:|
+| Eğitim | %86,95 | %3,61 | %37,81 |
+| Doğrulama | %86,91 | %5,24 | %26,86 |
+| **Test** | %87,26 | **%5,21** | **%27,70** |
+
+Kabul edilenlerin %5,21'i, reddedilenlerin %27,70'i temerrüde düşüyor. Eğitim
+kümesindeki %3,61 ise aşırı öğrenmenin iş diliyle görünümüdür; panelde küme
+filtresi bu nedenle zorunludur.
+
+Kalibrasyon en riskli dilimde 0,25 puan sapma gösteriyor (tahmin %31,00,
+gerçekleşen %30,75) — kâr bazlı eşik kalibre olasılıklara dayandığı için kritik.
+
+**Power BI bağlantısı.** Power BI Desktop → *Veri Al* → *PostgreSQL veritabanı* →
+sunucu `localhost:5433`, veritabanı `credit_risk` → *DirectQuery* veya *İçe Aktar*
+→ `monitoring` şemasındaki görünümleri seçin. Bağlantı için Npgsql sağlayıcısı
+gerekir; Power BI ilk bağlantıda kurulum bağlantısını gösterir.
+
+`v_segment_performans` görünümündeki `boyut` alanını dilimleyici olarak
+kullanırsanız, tek bir grafikle tüm segmentler arasında gezinebilirsiniz.
+Aynı görünümdeki `iyi_musteri_red_orani` alanı, adalet bölümünde ölçülen
+*equal opportunity* farkının panelde sürekli izlenmesini sağlar — cinsiyet
+modelden çıkarıldı, ancak vekiller üzerinden geri sızabildiği için (AUC 0,909)
+bu izleme kapatılmamalıdır.
+
 ## Doğrulama ve tekrarlanabilirlik
 
 Geliştirme sırasında gerçek bir **veri sızıntısı** yakalandı ve giderildi.
@@ -393,7 +438,7 @@ yeniden üretilmiştir.
 - [x] Model adaleti: hassas değişken denetimi, vekil sızıntı testi, grup metrikleri
 - [x] FastAPI skorlama servisi (SHAP gerekçeli, veri kalitesi denetimli) + testler
 - [x] PSI ile popülasyon kayması izleme (senaryo analizi)
-- [ ] Power BI izleme paneli
+- [x] Power BI için izleme katmanı (`monitoring` şeması: 1 tablo + 5 görünüm)
 - [ ] MLflow ile deney takibi
 
 ---
