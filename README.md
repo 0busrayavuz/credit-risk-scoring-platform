@@ -802,6 +802,8 @@ değil, gerekçelendirilmiş bir ödünleşmedir.
 - [x] PSI ile popülasyon kayması izleme (senaryo analizi)
 - [x] Power BI için izleme katmanı (`monitoring` şeması: 1 tablo + 5 görünüm)
 - [x] MLflow ile deney takibi (SQLite arka uç)
+- [x] Model doğrulama: bootstrap güven aralıkları, eşli karşılaştırma, kalibrasyon eğrisi
+- [x] GitHub Actions ile sürekli entegrasyon (17 birim testi, toplam 32)
 
 ---
 
