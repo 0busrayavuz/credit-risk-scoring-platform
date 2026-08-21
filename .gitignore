@@ -24,8 +24,12 @@ venv/
 mlruns/
 mlflow.db
 mlartifacts/
-models/*.pkl
-models/*.joblib
+
+# NOT: models/ altindaki egitilmis modeller BILINCLI olarak repoda tutuluyor
+# (~7,5 MB). Boylece repoyu klonlayan biri 5 dakikalik egitim beklemeden
+# API'yi ve kar analizini calistirabilir - portfolyo projesinde bu onemli.
+# Gercek uretim ortaminda modeller git'te degil, bir model kayit sisteminde
+# (MLflow Model Registry) tutulur ve git yalnizca kodu barindirir.
 
 # IDE / OS
 .vscode/
