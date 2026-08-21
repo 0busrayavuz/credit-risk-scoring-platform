@@ -5,9 +5,7 @@
 # Klasorlerin ICERIGI dislanir ama .gitkeep dosyalarina izin verilir;
 # boylece repoyu klonlayan kisi hazir klasor yapisini bulur.
 data/raw/*
-data/processed/*
-data/interim/*
-!data/*/.gitkeep
+!data/raw/.gitkeep
 
 # Python
 __pycache__/

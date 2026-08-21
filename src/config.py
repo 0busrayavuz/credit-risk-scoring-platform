@@ -16,7 +16,7 @@ DATA_DIR = PROJE_KOK / "data"
 MODELS_DIR = PROJE_KOK / "models"
 REPORTS_DIR = PROJE_KOK / "reports"
 
-for _d in (MODELS_DIR, REPORTS_DIR, DATA_DIR / "processed"):
+for _d in (MODELS_DIR, REPORTS_DIR):
     _d.mkdir(parents=True, exist_ok=True)
 
 # --- Veritabani -------------------------------------------------------------

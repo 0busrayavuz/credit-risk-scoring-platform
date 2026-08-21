@@ -271,7 +271,13 @@ def main(denetim: bool = False) -> None:
     print("YEREL ACIKLAMA: TEK BASVURU ICIN KARAR GEREKCESI")
     print("=" * 78)
 
-    for etiket, idx in (("reddedilen", idx_red), ("onaylanan", idx_onay)):
+    # Denetim modeli, "model bir butun olarak neye dayaniyor?" sorusunu
+    # cevaplamak icin var. Servise konmayan bir modelin TEKIL kararlarini
+    # aciklamanin pratik bir degeri yok - o yuzden denetim modunda yalnizca
+    # global analiz uretilir.
+    yerel_ornekler = () if denetim else (("reddedilen", idx_red), ("onaylanan", idx_onay))
+
+    for etiket, idx in yerel_ornekler:
         s = pd.Series(shap_degerleri[idx], index=ozellikler)
         ust = s.reindex(s.abs().sort_values(ascending=False).index).head(12)
         satirlar = pd.DataFrame({
@@ -313,10 +319,14 @@ def main(denetim: bool = False) -> None:
         encoding="utf-8",
     )
 
+    uretilenler = [f"reports/shap_global_onem{ek}.png",
+                   f"reports/shap_global_onem{ek}.csv",
+                   f"reports/shap_ozet{ek}.json"]
+    if not denetim:
+        uretilenler += ["reports/shap_yerel_reddedilen.png",
+                        "reports/shap_yerel_onaylanan.png"]
     print("\nKaydedilenler:")
-    for f in [f"reports/shap_global_onem{ek}.png", f"reports/shap_global_onem{ek}.csv",
-              f"reports/shap_yerel_reddedilen{ek}.png",
-              f"reports/shap_yerel_onaylanan{ek}.png", f"reports/shap_ozet{ek}.json"]:
+    for f in uretilenler:
         print(f"  {f}")
 
 
