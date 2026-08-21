@@ -29,6 +29,7 @@ from sklearn.preprocessing import StandardScaler
 from src.config import RANDOM_STATE, REPORTS_DIR, TARGET
 from src.data import model_input_yukle, ozet, veri_bol
 from src.metrics import degerlendir, dilim_analizi, rapor_yazdir
+from src.takip import deney
 
 # El ile secilmis degiskenler.
 # Secim kriteri: onceki asamada SQL ile OLCTUGUMUZ sinyal gucu.
@@ -167,6 +168,22 @@ def main() -> None:
     print("=" * 72)
     dilimler = dilim_analizi(y_valid, skor_valid, 10)
     print(dilimler.to_string(index=False))
+
+    # --- Deney kaydi -------------------------------------------------
+    # Baseline'i da kaydediyoruz: referans cizgisi olmadan "iyilesme"
+    # iddiasinin anlami yok. MLflow'da yan yana durmalilar.
+    for sonuc, ad, params in (
+        (sonuclar[0], "referans-tek-degisken", {"degisken": "ext_source_mean"}),
+        (sonuclar[1], "lojistik-regresyon", {
+            "degiskenler": ", ".join(BASELINE_OZELLIKLER),
+            "degisken_sayisi": len(BASELINE_OZELLIKLER),
+            "doldurma": "medyan + eksiklik gostergesi",
+            "olcekleme": "StandardScaler",
+        }),
+    ):
+        with deney(ad, params) as kosu:
+            kosu.etiket("asama", "baseline")
+            kosu.metrikler({k: v for k, v in sonuc.items() if k != "model"})
 
     # Sonuclari diske yaz: sonraki modellerle karsilastirabilmek icin.
     cikti = REPORTS_DIR / "baseline_sonuclar.json"

@@ -1,4 +1,4 @@
-# Sirlar
+﻿# Sirlar
 .env
 
 # Ham ve islenmis veri (2,5 GB - GitHub'a veri yuklenmez).
@@ -17,8 +17,12 @@ venv/
 .ipynb_checkpoints/
 .pytest_cache/
 
-# MLflow / model ciktilari
+# MLflow deney deposu ve model ciktilari.
+# MLflow 3.x dosya tabanli mlruns/ deposunu kullanimdan kaldirdi; bu proje
+# SQLite arka ucu kullaniyor (mlflow.db) ve artefaktlar mlartifacts/ altinda.
+# Ekipte ortak bir MLflow sunucusu kullanilir, bu dosyalar yerelde kalir.
 mlruns/
+mlflow.db
 mlartifacts/
 models/*.pkl
 models/*.joblib

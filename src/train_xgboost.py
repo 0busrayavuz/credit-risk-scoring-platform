@@ -40,6 +40,12 @@ import xgboost as xgb
 from src.config import MODELS_DIR, RANDOM_STATE, REPORTS_DIR, TARGET
 from src.data import kolon_tipleri, model_input_yukle, ozet, veri_bol
 from src.metrics import degerlendir, dilim_analizi, rapor_yazdir
+from src.takip import deney
+
+
+def PARAMETREler_kayit() -> dict:
+    """Hiperparametreleri MLflow'a yazilabilir bicimde dondurur."""
+    return {k: v for k, v in PARAMETRELER.items() if k != "n_jobs"}
 
 # Hiperparametreler.
 # Buyuk bir arama yapmadik; kredi riski verisinde iyi bilinen, muhafazakar
@@ -165,6 +171,24 @@ def main() -> None:
     model.save_model(str(MODELS_DIR / "xgboost.json"))
     ozet_df.to_json(REPORTS_DIR / "model_karsilastirma.json",
                     orient="records", indent=2, force_ascii=False)
+
+    # --- Deney kaydi -------------------------------------------------
+    # Parametreler, metrikler, uretilen dosyalar ve modelin kendisi tek bir
+    # kayda baglanir. Boylece "hangi ayarlarla 0.78 almistik?" sorusu
+    # sonradan cevaplanabilir hale gelir.
+    with deney("xgboost", {**PARAMETREler_kayit(), "degisken_sayisi": len(ozellikler)}) as kosu:
+        kosu.etiket("model_turu", "gradyan artirmali agaclar")
+        kosu.etiket("aciklanabilirlik", "SHAP gerekli (dogrudan okunamaz)")
+        kosu.metrikler({
+            **{k: v for k, v in sonuclar[-1].items() if k != "model"},
+            "egitim_auc": egitim_auc,
+            "asiri_ogrenme_farki": fark,
+            "en_iyi_tur": model.best_iteration,
+            "kullanilan_degisken": kullanilan,
+        })
+        kosu.dosya(REPORTS_DIR / "xgboost_degisken_onemi.csv")
+        kosu.model_xgboost(model)
+        print(f"\nMLflow kaydi: {kosu.id}")
 
     print(f"\nKaydedilenler:")
     print(f"  models/xgboost.json")

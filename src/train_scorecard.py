@@ -62,6 +62,7 @@ from src.scorecard_secim import (  # noqa: E402
     kalite_raporu,
     korelasyon_buda,
 )
+from src.takip import deney  # noqa: E402
 
 IV_MIN = 0.02          # bu esigin altindaki degiskenler gurultu ekler
 IV_MAX = 0.60          # ustu sizinti supheli - kontrol edilmeden alinmaz
@@ -280,6 +281,28 @@ def main() -> None:
         REPORTS_DIR / "model_karsilastirma.json",
         orient="records", indent=2, force_ascii=False,
     )
+
+    # --- Deney kaydi -------------------------------------------------
+    with deney("woe-scorecard", {
+        "iv_min": IV_MIN, "iv_max": IV_MAX,
+        "korelasyon_esigi": KORELASYON_ESIK,
+        "pdo": 20, "odds": 20, "scorecard_points": 600,
+        "aday_degisken": len(ozellikler),
+    }) as kosu:
+        kosu.etiket("model_turu", "WOE + lojistik regresyon")
+        kosu.etiket("aciklanabilirlik", "puan tablosu ile dogrudan okunabilir")
+        kosu.metrikler({
+            **{k: v for k, v in sonuclar[-1].items() if k != "model"},
+            "secilen_iv": len(secilen),
+            "secilen_korelasyon": len(kalan),
+            "secilen_nihai": len(nihai),
+            "yon_denetimi_ters": ters_sayi,
+            "puan_min": float(puanlar.min()),
+            "puan_max": float(puanlar.max()),
+        })
+        kosu.dosya(REPORTS_DIR / "scorecard_puan_tablosu.csv")
+        kosu.dosya(REPORTS_DIR / "scorecard_iv_tablosu.csv")
+        print(f"\nMLflow kaydi: {kosu.id}")
 
     print("\nKaydedilenler:")
     for f in ["models/scorecard.pkl", "reports/scorecard_iv_tablosu.csv",

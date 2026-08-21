@@ -2,7 +2,10 @@
 # Bilincli olarak minimal tutuldu. Her asamada gerekeni ekleyecegiz;
 # bastan 30 paket kurmak, birbiriyle cakisan surumler demek.
 
-pandas>=2.2
+# pandas ust siniri MLflow yuzunden: mlflow 3.x henuz pandas 3'u desteklemiyor
+# ve kurulumda sessizce 2.x'e dusuruyor. Sinirini acikca yazmak, "neden pandas
+# surumum degisti?" surprizini engeller.
+pandas>=2.2,<3
 numpy>=1.26
 
 # Postgres baglantisi
@@ -34,3 +37,6 @@ uvicorn[standard]>=0.32   # ASGI sunucusu
 pydantic>=2.9         # istek/yanit dogrulama
 httpx>=0.27           # API testleri icin istemci
 pytest>=8.3           # test kosucusu
+
+# --- Asama 5: deney takibi ---
+mlflow>=2.17          # model/metrik/artefakt kaydi

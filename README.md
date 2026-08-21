@@ -401,6 +401,38 @@ Aynı görünümdeki `iyi_musteri_red_orani` alanı, adalet bölümünde ölçü
 modelden çıkarıldı, ancak vekiller üzerinden geri sızabildiği için (AUC 0,909)
 bu izleme kapatılmamalıdır.
 
+## Deney takibi (MLflow)
+
+Sonuçları JSON dosyalarına yazmak çalışır ama ölçeklenmez: *"üçüncü denemede
+`learning_rate` neydi?"*, *"hangi değişken seti 0,78 vermişti?"* sorularını
+cevaplayamazsınız. MLflow her eğitimde parametreleri, metrikleri, üretilen
+dosyaları ve modelin kendisini tek bir kayda bağlar.
+
+Bu aynı zamanda bir **model yönetişimi** gereğidir: bir banka, kullandığı modelin
+hangi veriyle, hangi parametrelerle ve ne zaman eğitildiğini belgeleyebilmek
+zorundadır.
+
+```bash
+python -m mlflow ui --backend-store-uri sqlite:///mlflow.db --port 5055
+```
+
+| Koşu | AUC | Gini | KS | PR-AUC |
+|---|---:|---:|---:|---:|
+| `referans-tek-degisken` | 0,7150 | 0,4300 | 0,3253 | 0,1906 |
+| `lojistik-regresyon` | 0,7355 | 0,4710 | 0,3492 | 0,2119 |
+| `woe-scorecard` | 0,7640 | 0,5279 | 0,3973 | 0,2421 |
+| `xgboost` | 0,7828 | 0,5655 | 0,4295 | 0,2690 |
+
+Referans modeller de kaydedilir — bir temel çizgi olmadan "iyileştirdim" iddiası
+ölçülemez. Scorecard koşusu ayrıca değişken seçiminin her aşamasını
+(`secilen_iv`, `secilen_korelasyon`, `secilen_nihai`) ve yön denetimi sonucunu
+metrik olarak tutar; XGBoost koşusu aşırı öğrenme farkını ve erken durdurmanın
+seçtiği tur sayısını kaydeder.
+
+> **Not:** MLflow 3.x, klasik dosya tabanlı `mlruns/` deposunu kullanımdan
+> kaldırdı ve veritabanı arka ucu istiyor. Bu proje SQLite kullanır; ekip
+> ortamında yalnızca tracking URI'nin değişmesi yeterlidir, kod aynı kalır.
+
 ## Doğrulama ve tekrarlanabilirlik
 
 Geliştirme sırasında gerçek bir **veri sızıntısı** yakalandı ve giderildi.
@@ -439,7 +471,7 @@ yeniden üretilmiştir.
 - [x] FastAPI skorlama servisi (SHAP gerekçeli, veri kalitesi denetimli) + testler
 - [x] PSI ile popülasyon kayması izleme (senaryo analizi)
 - [x] Power BI için izleme katmanı (`monitoring` şeması: 1 tablo + 5 görünüm)
-- [ ] MLflow ile deney takibi
+- [x] MLflow ile deney takibi (SQLite arka uç)
 
 ---
 
