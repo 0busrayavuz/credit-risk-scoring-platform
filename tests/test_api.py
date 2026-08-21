@@ -33,15 +33,44 @@ def test_saglik(istemci):
     assert y.status_code == 200
     veri = y.json()
     assert veri["durum"] == "calisiyor"
-    # Cinsiyet degiskeni cikarildi: 228 -> 227
-    assert veri["degisken_sayisi"] == 227
+    assert veri["uyum"] == "gecti"
+    # Degisken sayisini SABIT yazmiyoruz.
+    # Ilk surumde 227 diye sabitlenmisti; korumali ozellik politikasi
+    # genisleyince (cinsiyete medeni durum ve aile buyuklugu eklenince) test
+    # kirildi - oysa DAVRANIS dogruydu, degisen yalnizca bir sayiydi.
+    # Anlamli olan sayi degil, korumali ozelligin modelde OLMAMASI.
+    assert 150 < veri["degisken_sayisi"] < 230, "degisken sayisi makul aralikta olmali"
     assert 0 < veri["esik"] < 0.5, "esik 0-0.5 araliginda olmali"
 
 
-def test_model_bilgisi(istemci):
+def test_korumali_ozellik_kullanilmiyor(istemci):
+    """Servisteki model hicbir Kademe 1 korumali ozelligi kullanmamali.
+
+    Bu, projenin en kritik uyum kontrolu. Servis zaten acilista ayni denetimi
+    yapip ihlal varsa BASLAMIYOR; bu test o mekanizmanin calistigini dogrular.
+    Yanlis model dosyasini gostermek (xgboost_adil.json yerine xgboost.json)
+    tek satirlik bir hatadir, ama sonucu cinsiyete gore kredi karari veren
+    canli bir sistemdir.
+    """
+    from src.api import DURUM
+    from src.korumali_ozellikler import KADEME_1
+
+    ihlal = [k for k in DURUM["ozellikler"] if k in KADEME_1]
+    assert ihlal == [], f"servisteki model korumali ozellik iceriyor: {ihlal}"
+
+
+def test_model_bilgisi_politikayi_bildiriyor(istemci):
+    """/model uc noktasi korumali ozellik politikasini raporlamali.
+
+    Bir denetci, kodu okumadan servisin hangi politikayi uyguladigini
+    gorebilmeli - model yonetisiminin temel gereklerinden biri.
+    """
     veri = istemci.get("/model").json()
-    assert "cinsiyet" in veri["model"].lower()
     assert veri["karar_esigi"] < 0.5
+    politika = veri["korumali_ozellik_politikasi"]
+    assert "code_gender" in politika["cikarilan"]
+    assert "name_family_status" in politika["cikarilan"]
+    assert politika["uyum_denetimi"].startswith("geçti")
 
 
 def test_mevcut_musteri_skorlanir(istemci):

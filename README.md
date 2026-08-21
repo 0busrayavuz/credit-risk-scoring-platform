@@ -3,7 +3,7 @@
 [![Lisans: MIT](https://img.shields.io/badge/lisans-MIT-1c5fb0)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-1c5fb0)](#kurulum)
 [![PostgreSQL](https://img.shields.io/badge/postgresql-16-1c5fb0)](#kurulum)
-[![Test](https://img.shields.io/badge/test-14%20ge%C3%A7ti-146b4d)](#testler)
+[![Test](https://img.shields.io/badge/test-15%20ge%C3%A7ti-146b4d)](#testler)
 
 Kredi başvurularının temerrüt olasılığını tahmin eden, kararı gerekçelendiren ve
 kâr etkisini ölçen uçtan uca bir risk skorlama sistemi. Veri yüklemeden model
@@ -400,8 +400,8 @@ Etkileşimli dokümantasyon: `http://localhost:8010/docs`
 
 | Uç nokta | İş |
 |---|---|
-| `GET /saglik` | Servis ve model durumu |
-| `GET /model` | Model kimliği, karar eşiği ve nasıl seçildiği |
+| `GET /saglik` | Servis durumu ve uyum denetimi sonucu |
+| `GET /model` | Model kimliği, karar eşiği ve **korumalı özellik politikası** |
 | `POST /skorla/musteri/{sk_id_curr}` | Özellikleri veritabanından okuyarak skorlar |
 | `POST /skorla` | Özellikleri istekte alarak skorlar (eksikler NaN) |
 
@@ -426,6 +426,21 @@ sahibine sebep bildirmek birçok ülkede yasal zorunluluktur:
   "eksik_degisken": 23
 }
 ```
+
+### Uyum denetimi: servis, uyumsuz modelle başlamaz
+
+Servis açılışta yüklediği modeli korumalı özellik politikasına karşı denetler ve
+ihlal bulursa **başlamayı reddeder**:
+
+```
+[servis] uyum denetimi: korumalı özellik yok (4 tanesi kontrol edildi)
+```
+
+Bunun bir uyarı değil bir durdurma olması bilinçlidir: model dosyasını yanlış
+göstermek (`xgboost_adil.json` yerine `xgboost.json`) tek satırlık bir hatadır,
+ancak sonucu cinsiyete göre kredi kararı veren canlı bir sistemdir. `/model` uç
+noktası da politikayı raporlar — bir denetçi, kodu okumadan servisin hangi kuralı
+uyguladığını görebilir.
 
 ### İki skorlama yolu ve eğitim-servis tutarsızlığı
 
@@ -453,9 +468,21 @@ başvuruyu insan incelemesine yönlendirir.
 python -m pytest tests -v
 ```
 
-9 bütünleşme testi: uç nokta sözleşmeleri, hata yönetimi, gerekçelerin etki
-sırasına göre sıralanması, veri kalitesi korumasının devreye girmesi ve
-beklenen eksiklerin yanlış alarm üretmemesi.
+15 bütünleşme testi iki dosyada:
+
+`test_api.py` — uç nokta sözleşmeleri, hata yönetimi, gerekçelerin etki sırasına
+göre sıralanması, veri kalitesi korumasının devreye girmesi, beklenen eksiklerin
+yanlış alarm üretmemesi ve **servisteki modelin korumalı özellik içermemesi**.
+
+`test_veri_bolme.py` — bölmenin tekrarlanabilirliği. En önemlisi, kasıtlı olarak
+karıştırılmış bir DataFrame'in **aynı** bölmeyi üretmesini kontrol eden test;
+bu proje bir veri sızıntısını tam olarak burada yaşadı.
+
+> Testlerden biri, korumalı özellik politikası genişletildiğinde kırıldı — çünkü
+> değişken sayısını sabit yazmıştı (`assert 227`). Davranış doğruydu, kırılan
+> yalnızca bir sayıydı. Test, sayıyı değil **korumalı özelliğin bulunmamasını**
+> doğrulayacak şekilde yeniden yazıldı: iyi bir test, uygulama detayını değil
+> sözleşmeyi korur.
 
 ## Model izleme (PSI)
 

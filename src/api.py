@@ -53,6 +53,7 @@ from pydantic import BaseModel, Field
 
 from src.config import MODELS_DIR, REPORTS_DIR
 from src.data import model_input_yukle, sorgu
+from src.korumali_ozellikler import KADEME_1, KADEME_2
 
 # Servisin durumu. Model ve sema BIR KEZ, acilista yuklenir.
 # Her istekte yeniden yuklemek saniyeler surerdi.
@@ -96,8 +97,24 @@ async def yasam_dongusu(app: FastAPI):
     en_iyi = getattr(model, "best_iteration", None)
     DURUM["aralik"] = (0, int(en_iyi) + 1) if en_iyi is not None else None
 
+    # --- UYUM DENETIMI --------------------------------------------------
+    # Servis, korumali ozellik iceren bir modelle BASLAMAZ.
+    # Neden bir kontrol degil de bir DURDURMA: yanlis model dosyasini
+    # gostermek (ornegin xgboost_adil.json yerine xgboost.json) tek satirlik
+    # bir hata ama sonucu, cinsiyete gore kredi karari veren canli bir
+    # sistemdir. Bu tur hatalarin sessizce gecmesine izin verilemez.
+    ihlal = [k for k in DURUM["ozellikler"] if k in KADEME_1]
+    if ihlal:
+        raise RuntimeError(
+            f"UYUM IHLALI: model korumali ozellik iceriyor: {ihlal}. "
+            "Servise adil surum (models/xgboost_adil.json) yuklenmelidir."
+        )
+    DURUM["politika_ihlali"] = ihlal
+
     print(f"[servis] model yuklendi: {len(DURUM['ozellikler'])} degisken | "
           f"esik {DURUM['esik']:.3f} | agac araligi {DURUM['aralik']}")
+    print(f"[servis] uyum denetimi: korumali ozellik yok "
+          f"({len(KADEME_1)} tanesi kontrol edildi)")
     yield
     DURUM.clear()
 
@@ -312,6 +329,7 @@ def saglik() -> dict:
         "durum": "calisiyor" if DURUM.get("model") is not None else "model yuklenmedi",
         "degisken_sayisi": len(DURUM.get("ozellikler", [])),
         "esik": DURUM.get("esik"),
+        "uyum": "gecti" if DURUM.get("politika_ihlali") == [] else "IHLAL",
     }
 
 
@@ -329,11 +347,17 @@ def model_bilgi() -> dict:
             "iki hata türünün eşit maliyetli olduğunu varsayar; kredi riskinde "
             "bu yanlıştır."
         ),
-        "adalet_notu": (
-            "code_gender modelden çıkarıldı (AUC maliyeti 0,0013). Ancak kalan "
-            "değişkenlerden cinsiyet AUC 0,911 ile tahmin edilebiliyor, bu yüzden "
-            "grup bazlı adalet metrikleri izlenmeye devam etmelidir."
-        ),
+        "korumali_ozellik_politikasi": {
+            "cikarilan": {k: g for k, g in KADEME_1.items()},
+            "kullanilan_ama_izlenen": {k: g for k, g in KADEME_2.items()},
+            "uyum_denetimi": "geçti — modelde korumalı özellik yok",
+            "not": (
+                "Çıkarılan özellikler kalan değişkenlerden büyük ölçüde geri "
+                "kazanılabiliyor (cinsiyet AUC 0,905; hane büyüklüğü AUC 1,000 — "
+                "income_per_person üzerinden). Bu nedenle grup bazlı adalet "
+                "metrikleri izlenmeye devam etmelidir."
+            ),
+        },
     }
 
 
