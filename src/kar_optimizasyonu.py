@@ -218,12 +218,18 @@ def main() -> None:
     train, valid, test = veri_bol(df)
     ozellikler = kolon_tipleri(df)["ozellikler"]
 
-    scorecard = Scorecard.load(str(MODELS_DIR / "scorecard.pkl"))
+    # SERVISE KONAN (adil) modeller kullanilir - denetim modelleri degil.
+    # Kar analizi, gercekte alinacak kararlarin ekonomisini olcer; dolayisiyla
+    # canlida calisacak modelle yapilmalidir. Ilk surumde denetim modelleri
+    # (korumali ozellik iceren xgboost.json / scorecard.pkl) kullaniliyordu ve
+    # README'nin mansetindeki kar rakamlari, servise konmayan bir modele aitti.
+    # Ayni tutarsizlik SHAP raporunda da yasanmisti; ikisi de giderildi.
+    scorecard = Scorecard.load(str(MODELS_DIR / "scorecard_adil.pkl"))
     sc_degisken = json.loads(
-        (REPORTS_DIR / "scorecard_secilen_degiskenler.json").read_text(encoding="utf-8")
+        (REPORTS_DIR / "scorecard_secilen_degiskenler_adil.json").read_text(encoding="utf-8")
     )
     xgb_model = xgb.XGBClassifier()
-    xgb_model.load_model(str(MODELS_DIR / "xgboost.json"))
+    xgb_model.load_model(str(MODELS_DIR / "xgboost_adil.json"))
 
     def hazirla(d):
         X = d[ozellikler].copy()
@@ -245,10 +251,15 @@ def main() -> None:
             X_valid_sc[k] = X_valid_sc[k].astype(object)
             X_test_sc[k] = X_test_sc[k].astype(object)
 
+    # Degisken listesini modelin KENDISINDEN aliyoruz. kolon_tipleri() 228 kolon
+    # dondurur; adil model ise 224 bekler (korumali ozellikler cikarildi).
+    # Sabit listeye guvenmek, model degistiginde sessiz uyumsuzluk uretir.
+    xgb_degisken = list(xgb_model.get_booster().feature_names)
+
     p_sc_valid = scorecard.predict_proba(X_valid_sc)[:, 1]
     p_sc_test = scorecard.predict_proba(X_test_sc)[:, 1]
-    p_xgb_valid = xgb_model.predict_proba(valid[ozellikler])[:, 1]
-    p_xgb_test = xgb_model.predict_proba(test[ozellikler])[:, 1]
+    p_xgb_valid = xgb_model.predict_proba(valid[xgb_degisken])[:, 1]
+    p_xgb_test = xgb_model.predict_proba(test[xgb_degisken])[:, 1]
 
     print(f"dogrulama: {len(y_valid):,} basvuru | test: {len(y_test):,} basvuru")
     print(f"ortalama kredi tutari (test): {tutar_test.mean():,.0f}")

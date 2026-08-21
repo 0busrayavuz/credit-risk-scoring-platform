@@ -4,8 +4,8 @@
     "lgd": 0.65
   },
   "optimum_esik": {
-    "scorecard": 0.14215538847117795,
-    "xgboost": 0.15213032581453634
+    "scorecard": 0.15711779448621555,
+    "xgboost": 0.13966165413533835
   },
   "test_sonuclari": {
     "model yok - herkese onay": {
@@ -20,33 +20,33 @@
     },
     "sabit 0.50 esigi (XGBoost)": {
       "esik": 0.5,
-      "onay_orani": 0.9926507650033332,
-      "kar": 2344651488.765,
-      "kar_basvuri": 38122.55481464318,
-      "onaylanan": 61051,
-      "onaylananda_temerrut": 0.07711585395816613,
-      "kacirilan_iyi": 195,
-      "onlenen_batik": 257
+      "onay_orani": 0.9924556525697933,
+      "kar": 2346552777.87,
+      "kar_basvuri": 38153.46857665479,
+      "onaylanan": 61039,
+      "onaylananda_temerrut": 0.0769999508510952,
+      "kacirilan_iyi": 199,
+      "onlenen_batik": 265
     },
     "WOE scorecard - optimum": {
-      "esik": 0.14215538847117795,
-      "onay_orani": 0.8430483065866705,
-      "kar": 2595259173.2849994,
-      "kar_basvuri": 42197.277747183056,
-      "onaylanan": 51850,
-      "onaylananda_temerrut": 0.050935390549662486,
-      "kacirilan_iyi": 7329,
-      "onlenen_batik": 2324
+      "esik": 0.15711779448621555,
+      "onay_orani": 0.867112173389916,
+      "kar": 2585776116.555,
+      "kar_basvuri": 42043.08922418419,
+      "onaylanan": 53330,
+      "onaylananda_temerrut": 0.05430339396212263,
+      "kacirilan_iyi": 6104,
+      "onlenen_batik": 2069
     },
     "XGBoost - optimum": {
-      "esik": 0.15213032581453634,
-      "onay_orani": 0.8592751573093995,
-      "kar": 2651890302.6299996,
-      "kar_basvuri": 43118.06420223403,
-      "onaylanan": 52848,
-      "onaylananda_temerrut": 0.05033303057826219,
-      "kacirilan_iyi": 6350,
-      "onlenen_batik": 2305
+      "esik": 0.13966165413533835,
+      "onay_orani": 0.841389850901582,
+      "kar": 2663088116.535,
+      "kar_basvuri": 43300.13359567826,
+      "onaylanan": 51748,
+      "onaylananda_temerrut": 0.04794388188915514,
+      "kacirilan_iyi": 7271,
+      "onlenen_batik": 2484
     }
   }
 }

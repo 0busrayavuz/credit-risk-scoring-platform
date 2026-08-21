@@ -300,6 +300,11 @@ def main() -> None:
         }, indent=2, ensure_ascii=False),
         encoding="utf-8",
     )
+    # Bu model yalnizca "adil karsilastirma" sorusunu cevaplamak icin egitildi;
+    # servise konmuyor ve baska hicbir yerde kullanilmiyor. Diske yaziyoruz ki
+    # analiz tekrar calistirilmadan incelenebilsin, ancak .gitignore ile repo
+    # disinda tutuluyor - 2,7 MB'lik tek kullanimlik bir dosyayi versiyon
+    # kontrolunde tasimanin anlami yok, script'i calistirmak yeterli.
     esit.save_model(str(MODELS_DIR / "xgboost_esit_karsilastirma.json"))
     print(f"Grafik  : {REPORTS_DIR / 'model_dogrulama.png'}")
     print(f"Sonuclar: {REPORTS_DIR / 'model_dogrulama.json'}")

@@ -11,7 +11,7 @@ servisine kadar tüm adımlar tekrarlanabilir şekilde kurgulanmıştır.
 
 **Özet sonuç.** 8 tablodaki 58,5 milyon satır, müşteri başına tek satıra indirgendi
 (307.511 × 230). XGBoost doğrulama kümesinde **Gini 0,566 · KS 0,430**; kâr bazlı
-kesim noktasıyla portföy kârı **+%16,6**. Servise konan model, gerekçeli bir
+kesim noktasıyla portföy kârı **+%17,1**. Servise konan model, gerekçeli bir
 **korumalı özellik politikasından** geçirildi (cinsiyet, medeni durum ve aile
 yapısı değişkenleri çıkarıldı — maliyet: 0,002 AUC); karar eşiği kâr fonksiyonuyla
 belirlendi.
@@ -117,15 +117,19 @@ credit-risk-platform/
 │   ├── 00_init/                    şema tanımı (otomatik üretilir)
 │   ├── 01_staging/                 COPY ile yükleme + indeksler
 │   └── 02_features/                öznitelik üretimi (SQL)
-├── notebooks/                      modelleme ve analiz
+├── tests/                          birim ve bütünleşme testleri
 ├── models/                         eğitilmiş model dosyaları
-├── reports/                        çıktılar ve grafikler
+├── reports/                        grafikler, tablolar ve analiz çıktıları
 ├── data/raw/                       ham CSV (repoda tutulmaz)
 ├── .env.example                    ortam değişkeni şablonu
 └── requirements.txt
 ```
 
 SQL dosyaları **numaralandırılmıştır**; sıra, çalıştırma sırasıdır.
+
+Projede notebook bulunmaz: tüm mantık `src/` altında modüllerdedir. Bu bilinçli
+bir tercihtir — aynı kod hem analizlerde hem FastAPI servisinde çalışır, böylece
+notebook ile üretim kodu arasındaki kopukluk oluşmaz.
 
 ---
 
@@ -265,20 +269,24 @@ Test kümesi (61.503 başvuru · marj %12 · LGD %65 varsayımıyla).
 **Tutarlar veri seti birimindedir** — veri setinde para birimi tanımlı değildir,
 dolayısıyla anlamlı olan mutlak değerler değil senaryolar arasındaki orandır:
 
+Hesap, **servise konan** modellerle yapılır — korumalı özellik politikasından
+geçmiş sürümlerle. Kâr analizi gerçekte alınacak kararların ekonomisini ölçtüğü
+için canlıda çalışacak modelle yapılmalıdır.
+
 | Senaryo | Onay oranı | Onaylananlarda temerrüt | Portföy kârı |
 |---|---:|---:|---:|
 | Model yok — herkese onay | %100 | %8,07 | 2,27 milyar |
-| Sabit 0,50 eşiği | %99,3 | %7,71 | 2,34 milyar |
-| WOE scorecard — optimum (0,142) | %84,3 | %5,09 | 2,60 milyar |
-| **XGBoost — optimum (0,152)** | **%85,9** | **%5,03** | **2,65 milyar** |
+| Sabit 0,50 eşiği | %99,2 | %7,70 | 2,35 milyar |
+| WOE scorecard — optimum (0,157) | %86,7 | %5,43 | 2,59 milyar |
+| **XGBoost — optimum (0,140)** | **%84,1** | **%4,79** | **2,66 milyar** |
 
-**Projenin en önemli bulgusu:** model yükseltmesi (scorecard → XGBoost) +57 milyon
-katkı sağlarken, eşik kararı (0,50 → 0,152) **+310 milyon** katkı sağlıyor.
-Eşiği doğru seçmek, modeli yükseltmekten yaklaşık **beş kat** daha değerli.
-Varsayılan 0,5 eşiğiyle çalışan bir sistem başvuruların %99,3'ünü onaylar ve
+**Projenin en önemli bulgusu:** model yükseltmesi (scorecard → XGBoost) +77 milyon
+katkı sağlarken, eşik kararı (0,50 → 0,140) **+310 milyon** katkı sağlıyor.
+Eşiği doğru seçmek, modeli yükseltmekten yaklaşık **dört kat** daha değerli.
+Varsayılan 0,5 eşiğiyle çalışan bir sistem başvuruların %99,2'sini onaylar ve
 modelin sunduğu değerin neredeyse tamamını kullanmadan bırakır.
 
-Optimum eşikte 2.305 batık kredi önleniyor, karşılığında 6.350 iyi müşteri
+Optimum eşikte 2.484 batık kredi önleniyor, karşılığında 7.271 iyi müşteri
 reddediliyor. Bu takas kâr fonksiyonu tarafından, sezgiyle değil hesapla belirlenir.
 
 Marj ve LGD birer varsayımdır; 5×5'lik bir duyarlılık analizi ile optimum eşiğin
@@ -720,7 +728,7 @@ yakalayacağını kanıtlamaz.
 ### Kâr hesabı
 
 **Para birimi tanımsız.** Veri setinde tutarların birimi belirtilmemiştir.
-Raporlanan "2,65 milyar" gibi değerler **veri seti birimindedir**, herhangi bir
+Raporlanan "2,66 milyar" gibi değerler **veri seti birimindedir**, herhangi bir
 para birimi değildir. Anlamlı olan mutlak tutar değil, senaryolar arasındaki
 **oransal** farktır.
 
@@ -734,7 +742,7 @@ temerrüdün kredinin kaçıncı ayında gerçekleştiği dikkate alınmaz (erke
 çok daha pahalıdır); reddedilen başvurunun karşı-olgusu sıfır kabul edilir
 (gerçekte müşteri rakibe gider); ters seçim etkisi modellenmez.
 
-**"Eşik, modelden beş kat değerli" karşılaştırması bir sınırlama taşır.**
+**"Eşik, modelden dört kat değerli" karşılaştırması bir sınırlama taşır.**
 Referans alınan 0,50 eşiği kredi riskinde kimsenin kullanmadığı bir değerdir;
 karşılaştırma temiz bir ayrıştırma değil, öğretici bir gösterimdir.
 

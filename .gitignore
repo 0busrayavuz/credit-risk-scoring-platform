@@ -25,9 +25,16 @@ mlruns/
 mlflow.db
 mlartifacts/
 
-# NOT: models/ altindaki egitilmis modeller BILINCLI olarak repoda tutuluyor
-# (~7,5 MB). Boylece repoyu klonlayan biri 5 dakikalik egitim beklemeden
-# API'yi ve kar analizini calistirabilir - portfolyo projesinde bu onemli.
+# Tek kullanimlik analiz modeli: yalnizca "adil karsilastirma" sorusunu
+# cevaplamak icin egitildi, servise konmuyor, baska yerde kullanilmiyor.
+# 2,7 MB'lik bu dosyayi versiyon kontrolunde tasimanin anlami yok;
+# src/model_dogrulama.py calistirilinca yeniden uretilir.
+models/xgboost_esit_karsilastirma.json
+
+# NOT: models/ altindaki DIGER egitilmis modeller BILINCLI olarak repoda
+# tutuluyor (~7 MB). Boylece repoyu klonlayan biri 5 dakikalik egitim
+# beklemeden API'yi ve kar analizini calistirabilir - portfolyo projesinde
+# bu onemli.
 # Gercek uretim ortaminda modeller git'te degil, bir model kayit sisteminde
 # (MLflow Model Registry) tutulur ve git yalnizca kodu barindirir.
 
