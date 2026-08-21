@@ -1,10 +1,27 @@
 # Kredi Risk Skorlama Platformu
 
-Kredi başvurularının temerrüt olasılığını tahmin eden, uçtan uca bir risk skorlama sistemi.
-Veri yükleme ve öznitelik üretiminden model servisine kadar tüm adımlar tekrarlanabilir
-şekilde kurgulanmıştır.
+[![Lisans: MIT](https://img.shields.io/badge/lisans-MIT-1c5fb0)](LICENSE)
+[![Python](https://img.shields.io/badge/python-3.11%2B-1c5fb0)](#kurulum)
+[![PostgreSQL](https://img.shields.io/badge/postgresql-16-1c5fb0)](#kurulum)
+[![Test](https://img.shields.io/badge/test-14%20ge%C3%A7ti-146b4d)](#testler)
 
-> **Durum:** Geliştirme sürüyor. Tamamlanan ve planlanan adımlar aşağıdaki yol haritasında işaretlidir.
+Kredi başvurularının temerrüt olasılığını tahmin eden, kararı gerekçelendiren ve
+kâr etkisini ölçen uçtan uca bir risk skorlama sistemi. Veri yüklemeden model
+servisine kadar tüm adımlar tekrarlanabilir şekilde kurgulanmıştır.
+
+**Özet sonuç.** 8 tablodaki 58,5 milyon satır, müşteri başına tek satıra indirgendi
+(307.511 × 230). XGBoost doğrulama kümesinde **Gini 0,566 · KS 0,430**; kâr bazlı
+kesim noktasıyla portföy kârı **+%16,6**. Model, SHAP denetimi sonucu cinsiyet
+değişkeninden arındırıldı; karar eşiği kâr fonksiyonuyla belirlendi.
+
+| Katman | Ne yapıldı |
+|---|---|
+| Veri | PostgreSQL 16, `COPY` ile 58,5M satır / 74 sn, otomatik şema üretimi |
+| Öznitelik | 5 özet tablo + oranlar — **tamamı SQL'de**, pandas'a veri taşınmadan |
+| Model | WOE scorecard (52 değişken, denetlenebilir) + XGBoost karşılaştırması |
+| Karar | Kâr bazlı kesim noktası, 5×5 duyarlılık analizi |
+| Güven | SHAP gerekçelendirme, adalet denetimi, PSI izleme, 14 test |
+| Servis | FastAPI (gerekçeli karar + veri kalitesi denetimi), MLflow, Power BI katmanı |
 
 ---
 
@@ -110,7 +127,10 @@ SQL dosyaları **numaralandırılmıştır**; sıra, çalıştırma sırasıdır
 
 ---
 
-## Şu ana kadarki bulgular
+## Öznitelik bulguları
+
+Her öznitelik, modele eklenmeden önce hedef değişkene karşı dilimlenerek ölçüldü.
+Aşağıdakiler tahmin değil, veriden okunan sonuçlardır.
 
 Dış kredi geçmişindeki gecikme oranı ile temerrüt arasında **düzgün artan** bir ilişki:
 
@@ -192,6 +212,40 @@ reddediliyor. Bu takas kâr fonksiyonu tarafından, sezgiyle değil hesapla beli
 
 Marj ve LGD birer varsayımdır; 5×5'lik bir duyarlılık analizi ile optimum eşiğin
 bu varsayımlara bağlılığı ölçülmüştür (onay oranı %59–%98 aralığında değişiyor).
+
+## Açıklanabilirlik (SHAP)
+
+Scorecard zaten okunabilir bir puan tablosu üretir. XGBoost ise 910 ağacın toplamıdır —
+hiç kimse onu okuyarak *"bu müşteri neden reddedildi?"* sorusunu cevaplayamaz. SHAP bu
+boşluğu doldurur ve iki ayrı ihtiyaca hizmet eder.
+
+**Karar gerekçesi (yerel).** Reddedilen başvuru sahibine sebep bildirmek birçok ülkede
+yasal zorunluluktur. SHAP bunu tek bir başvuru için üretir:
+
+![Karar gerekçesi](reports/shap_yerel_reddedilen.png)
+
+Gerçek bir reddedilen başvuru — tahmin %81, gerçekleşen sonuç: temerrüt. Dış kredi
+skorunun düşüklüğü tek başına **+1,04 log-odds** katkı veriyor; ardından ödenmemiş
+taksitler, yüksek kart bakiyesi ve 9 aktif kredi geliyor. Tek olumlu faktör mesleği.
+Bu tablo, müşteriye iletilecek gerekçe metninin kendisidir.
+
+**Model denetimi (global).** Model bir bütün olarak neye dayanıyor?
+
+![Global değişken önemi](reports/shap_global_onem.png)
+
+Bu grafik projenin en önemli bulgusunu ortaya çıkardı: `code_gender` 4. sırada.
+Ayrıntısı aşağıdaki bölümde.
+
+Değişken önemleri, SQL aşamasında ölçülen sinyalleri de doğruluyor — `cc_utilization_avg_1y`,
+`inst_late_ratio_1y` ve `prev_refused_ratio` iki bağımsız yöntemde de öne çıkıyor.
+Ayrıca son-12-ay (`_1y`) metrikleri tüm-zaman karşılıklarından daha önemli çıktı:
+yakın geçmişin daha bilgilendirici olduğu varsayımı ölçümle doğrulandı.
+
+> SHAP değerleri XGBoost'un kendi TreeSHAP uygulamasından alınır (`pred_contribs=True`).
+> Her çalıştırmada **toplanabilirlik** doğrulanır — temel değer ile katkıların toplamı
+> modelin tahminini vermelidir; ölçülen sapma 5,8 × 10⁻⁷. Erken durdurma nedeniyle
+> `iteration_range` verilmesi şarttır, aksi halde SHAP farklı sayıda ağaç kullanır ve
+> katkılar tahminle örtüşmez.
 
 ## Model adaleti ve regülasyon uyumu
 
