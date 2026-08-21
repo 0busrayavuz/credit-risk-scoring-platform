@@ -1,0 +1,47 @@
+{
+  "ornek_sayisi": 8000,
+  "temel_deger_logodds": -2.443345308303833,
+  "toplanabilirlik_sapmasi": 5.960464477539062e-07,
+  "en_onemli_10": [
+    {
+      "degisken": "ext_source_mean",
+      "ortalama_mutlak_shap": 0.41642001271247864
+    },
+    {
+      "degisken": "code_gender",
+      "ortalama_mutlak_shap": 0.1090974286198616
+    },
+    {
+      "degisken": "pos_remaining_avg",
+      "ortalama_mutlak_shap": 0.1088171973824501
+    },
+    {
+      "degisken": "organization_type",
+      "ortalama_mutlak_shap": 0.10601963847875595
+    },
+    {
+      "degisken": "credit_term",
+      "ortalama_mutlak_shap": 0.10054736584424973
+    },
+    {
+      "degisken": "credit_goods_ratio",
+      "ortalama_mutlak_shap": 0.09522779285907745
+    },
+    {
+      "degisken": "amt_annuity",
+      "ortalama_mutlak_shap": 0.093146912753582
+    },
+    {
+      "degisken": "bureau_debt_ratio",
+      "ortalama_mutlak_shap": 0.08995597064495087
+    },
+    {
+      "degisken": "inst_amt_paid_sum",
+      "ortalama_mutlak_shap": 0.08176721632480621
+    },
+    {
+      "degisken": "inst_late_ratio_1y",
+      "ortalama_mutlak_shap": 0.07686088979244232
+    }
+  ]
+}

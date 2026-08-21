@@ -63,6 +63,11 @@ from src.scorecard_secim import (  # noqa: E402
     korelasyon_buda,
 )
 from src.takip import deney  # noqa: E402
+from src.korumali_ozellikler import (  # noqa: E402
+    KADEME_1,
+    cikarilanlar,
+    temiz_ozellikler,
+)
 
 IV_MIN = 0.02          # bu esigin altindaki degiskenler gurultu ekler
 IV_MAX = 0.60          # ustu sizinti supheli - kontrol edilmeden alinmaz
@@ -106,11 +111,13 @@ def puan_yonu_denetle(puan_tablosu: pd.DataFrame) -> pd.DataFrame:
     return pd.DataFrame(satirlar)
 
 
-def main() -> None:
+def main(adil: bool = False) -> None:
+    """adil=True ise Kademe 1 korumali ozellikler modele hic girmez."""
     baslangic = time.time()
+    ek = "_adil" if adil else ""
 
     print("=" * 78)
-    print("VERI")
+    print("VERI" + ("  (ADIL SURUM - korumali ozellikler haric)" if adil else ""))
     print("=" * 78)
     df = model_input_yukle()
     train, valid, test = veri_bol(df)
@@ -119,6 +126,15 @@ def main() -> None:
 
     tipler = kolon_tipleri(df)
     ozellikler, kategorik = tipler["ozellikler"], tipler["kategorik"]
+
+    if adil:
+        cikan = cikarilanlar(ozellikler)
+        ozellikler = temiz_ozellikler(ozellikler)
+        kategorik = [k for k in kategorik if k in ozellikler]
+        print(f"\nKorumali ozellikler cikarildi ({len(cikan)}):")
+        for k in cikan:
+            print(f"  - {k}: {KADEME_1[k]}")
+
     print(f"\naday degisken: {len(ozellikler)}")
 
     X_train = veri_hazirla(train, ozellikler, kategorik)
@@ -151,7 +167,7 @@ def main() -> None:
         print(f"    {r['name']:38s} IV={r['iv']:.4f}  {guc}")
 
     secilen[["name", "dtype", "iv", "js", "n_bins"]].to_csv(
-        REPORTS_DIR / "scorecard_iv_tablosu.csv", index=False, encoding="utf-8"
+        REPORTS_DIR / f"scorecard_iv_tablosu{ek}.csv", index=False, encoding="utf-8"
     )
 
     # =================================================================
@@ -231,7 +247,7 @@ def main() -> None:
     # =================================================================
     puan_tablosu = scorecard.table(style="detailed")
     puan_tablosu.to_csv(
-        REPORTS_DIR / "scorecard_puan_tablosu.csv", index=False, encoding="utf-8"
+        REPORTS_DIR / f"scorecard_puan_tablosu{ek}.csv", index=False, encoding="utf-8"
     )
 
     puanlar = scorecard.score(X_valid[nihai])
@@ -273,17 +289,18 @@ def main() -> None:
     print("\nPUAN BANDINA GORE TEMERRUT:")
     print(bant.to_string(index=False))
 
-    scorecard.save(str(MODELS_DIR / "scorecard.pkl"))
-    (REPORTS_DIR / "scorecard_secilen_degiskenler.json").write_text(
+    scorecard.save(str(MODELS_DIR / f"scorecard{ek}.pkl"))
+    (REPORTS_DIR / f"scorecard_secilen_degiskenler{ek}.json").write_text(
         json.dumps(nihai, indent=2, ensure_ascii=False), encoding="utf-8"
     )
     ozet_df.to_json(
-        REPORTS_DIR / "model_karsilastirma.json",
+        REPORTS_DIR / f"model_karsilastirma{ek}.json",
         orient="records", indent=2, force_ascii=False,
     )
 
     # --- Deney kaydi -------------------------------------------------
-    with deney("woe-scorecard", {
+    with deney(f"woe-scorecard{'-adil' if adil else ''}", {
+        "korumali_ozellik_politikasi": "kademe-1 haric" if adil else "uygulanmadi",
         "iv_min": IV_MIN, "iv_max": IV_MAX,
         "korelasyon_esigi": KORELASYON_ESIK,
         "pdo": 20, "odds": 20, "scorecard_points": 600,
@@ -314,4 +331,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(adil="--adil" in sys.argv)

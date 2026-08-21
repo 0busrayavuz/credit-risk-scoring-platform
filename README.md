@@ -11,8 +11,10 @@ servisine kadar tüm adımlar tekrarlanabilir şekilde kurgulanmıştır.
 
 **Özet sonuç.** 8 tablodaki 58,5 milyon satır, müşteri başına tek satıra indirgendi
 (307.511 × 230). XGBoost doğrulama kümesinde **Gini 0,566 · KS 0,430**; kâr bazlı
-kesim noktasıyla portföy kârı **+%16,6**. Model, SHAP denetimi sonucu cinsiyet
-değişkeninden arındırıldı; karar eşiği kâr fonksiyonuyla belirlendi.
+kesim noktasıyla portföy kârı **+%16,6**. Servise konan model, gerekçeli bir
+**korumalı özellik politikasından** geçirildi (cinsiyet, medeni durum ve aile
+yapısı değişkenleri çıkarıldı — maliyet: 0,002 AUC); karar eşiği kâr fonksiyonuyla
+belirlendi.
 
 | Katman | Ne yapıldı |
 |---|---|
@@ -165,8 +167,17 @@ Doğrulama kümesi (61.502 başvuru, eğitimde kullanılmadı):
 |---|---:|---:|---:|---:|---:|
 | Tek değişken (`ext_source_mean`) | 0,7150 | 0,4300 | 0,3253 | 0,1906 | 1 |
 | Lojistik regresyon | 0,7355 | 0,4710 | 0,3492 | 0,2119 | 10 |
-| **WOE scorecard** | 0,7640 | 0,5279 | 0,3973 | 0,2421 | 52 |
+| WOE scorecard | 0,7640 | 0,5279 | 0,3973 | 0,2421 | 52 |
 | **XGBoost** | **0,7828** | **0,5655** | **0,4295** | **0,2690** | 228 |
+
+Yukarıdakiler **denetim** modelleridir — tüm değişkenlerle eğitilir ve modelin neye
+dayandığını incelemek için kullanılırlar. Servise konan sürümler korumalı özellik
+politikasından geçirilmiştir:
+
+| Servise konan model | AUC | Gini | KS | Değişken |
+|---|---:|---:|---:|---:|
+| WOE scorecard (adil) | 0,7621 | 0,5241 | 0,3955 | 50 |
+| **XGBoost (adil)** | **0,7807** | **0,5615** | **0,4290** | 224 |
 
 Aşırı öğrenme kontrolü (XGBoost): eğitim 0,8666 · doğrulama 0,7828 · **test 0,7832**.
 Test ile doğrulamanın örtüşmesi, bölmenin sızıntısız olduğunun doğrudan kanıtıdır.
@@ -229,17 +240,41 @@ skorunun düşüklüğü tek başına **+1,04 log-odds** katkı veriyor; ardınd
 taksitler, yüksek kart bakiyesi ve 9 aktif kredi geliyor. Tek olumlu faktör mesleği.
 Bu tablo, müşteriye iletilecek gerekçe metninin kendisidir.
 
-**Model denetimi (global).** Model bir bütün olarak neye dayanıyor?
+**Model denetimi (global).** Model bir bütün olarak neye dayanıyor? Bu soru,
+projenin en önemli bulgusunu ortaya çıkardı.
 
-![Global değişken önemi](reports/shap_global_onem.png)
+Denetim modeli — tüm değişkenlerle eğitilen, *incelemek için* var olan sürüm:
 
-Bu grafik projenin en önemli bulgusunu ortaya çıkardı: `code_gender` 4. sırada.
-Ayrıntısı aşağıdaki bölümde.
+![Denetim modeli değişken önemi](reports/shap_global_onem_denetim.png)
 
-Değişken önemleri, SQL aşamasında ölçülen sinyalleri de doğruluyor — `cc_utilization_avg_1y`,
-`inst_late_ratio_1y` ve `prev_refused_ratio` iki bağımsız yöntemde de öne çıkıyor.
-Ayrıca son-12-ay (`_1y`) metrikleri tüm-zaman karşılıklarından daha önemli çıktı:
-yakın geçmişin daha bilgilendirici olduğu varsayımı ölçümle doğrulandı.
+**`code_gender` ikinci sırada.** Bu grafik olmasaydı fark edilmeyecekti.
+Bulgunun nasıl ele alındığı bir sonraki bölümde.
+
+Servise konan model — korumalı özellik politikası uygulanmış sürüm:
+
+![Servisteki modelin değişken önemi](reports/shap_global_onem.png)
+
+| Sıra | Denetim modeli | | Servisteki model | |
+|---:|---|---:|---|---:|
+| 1 | `ext_source_mean` | 0,4164 | `ext_source_mean` | 0,4320 |
+| 2 | **`code_gender`** | 0,1091 | `organization_type` | 0,1089 |
+| 3 | `pos_remaining_avg` | 0,1088 | `pos_remaining_avg` | 0,1079 |
+
+İki raporun ayrı tutulması bilinçlidir: **belgelenen model ile çalışan model aynı
+olmalıdır.** İlk sürümde SHAP raporu denetim modeli üzerinde üretilmiş, README ise
+temizlenmiş modeli anlatıyordu; bu tutarsızlık giderildi. `src/shap_analizi.py`
+varsayılan olarak servisteki modeli inceler, `--denetim` bayrağıyla diğerini.
+
+> Dikkat çeken bir ayrıntı: cinsiyet çıkarıldığında `organization_type`
+> neredeyse tam olarak onun bıraktığı ağırlığı devralıyor (0,1089 ↔ 0,1091).
+> Vekil sızıntı testi de meslek/kurum alanlarını cinsiyetin güçlü vekilleri
+> arasında gösteriyor — bu, aşağıdaki bölümün ana temasıdır.
+
+Değişken önemleri, SQL aşamasında ölçülen sinyalleri de doğruluyor —
+`cc_utilization_avg_1y`, `inst_late_ratio_1y` ve `prev_refused_ratio` iki bağımsız
+yöntemde de öne çıkıyor. Ayrıca son-12-ay (`_1y`) metrikleri tüm-zaman
+karşılıklarından daha önemli çıktı: yakın geçmişin daha bilgilendirici olduğu
+varsayımı ölçümle doğrulandı.
 
 > SHAP değerleri XGBoost'un kendi TreeSHAP uygulamasından alınır (`pred_contribs=True`).
 > Her çalıştırmada **toplanabilirlik** doğrulanır — temel değer ile katkıların toplamı
@@ -249,39 +284,87 @@ yakın geçmişin daha bilgilendirici olduğu varsayımı ölçümle doğruland�
 
 ## Model adaleti ve regülasyon uyumu
 
-SHAP analizi, modelin **cinsiyeti (`code_gender`) 4. en önemli değişken** olarak
-kullandığını ortaya çıkardı (ortalama |SHAP| 0,1154 — toplam önemin %3'ü).
-Finansal hizmetlerde cinsiyete dayalı ayrım ABD'de Equal Credit Opportunity Act,
-AB'de 2004/113/EC direktifi ile yasaklanmıştır; Türkiye'de de bankalar ayrımcılık
-yasağına tabidir. Bulgu ölçüldü ve giderildi.
+SHAP denetimi, modelin **cinsiyeti (`code_gender`) en önemli değişkenlerden biri**
+olarak kullandığını ortaya çıkardı. İlk tepki yalnızca o kolonu çıkarmak oldu —
+ancak sonraki denetimde bunun iki açıdan yetersiz olduğu görüldü: **medeni durum**
+(`name_family_status`) da ECOA'da cinsiyetle *aynı listede* korumalı bir özellikti
+ve modelde duruyordu; ayrıca cinsiyet yalnızca XGBoost'tan çıkarılmış, scorecard'da
+bırakılmıştı.
+
+Bunun üzerine denetim tesadüfe bırakılmaktan çıkarılıp **gerekçeli bir politikaya**
+bağlandı (`src/korumali_ozellikler.py`) ve her modele aynı şekilde uygulandı.
+
+**Kademe 1 — modelden çıkarılır:** `code_gender` (ECOA, AB 2004/113/EC),
+`name_family_status` (ECOA'da açıkça korumalı), `cnt_children` ve `cnt_fam_members`
+(aile yapısının yakın vekilleri).
+
+**Kademe 2 — kullanılır, izlenir:** yaş (ECOA, istatistiksel geçerliliği gösterilmiş
+skorlama sistemlerinde yaşın kullanımına izin verir) ve bölge derecesi (bölgesel
+iktisadi koşullar meşru risk bilgisidir, ancak *redlining* endişesi taşır).
+
+### Maliyet: ölçülebilir ama ihmal edilebilir
+
+| Model | AUC (önce → sonra) | Gini kaybı | Değişken |
+|---|---|---:|---|
+| WOE scorecard | 0,7640 → 0,7621 | 0,0038 | 52 → 50 |
+| XGBoost | 0,7828 → 0,7807 | 0,0041 | 228 → 224 |
+
+Portföy kârına etkisi **+11,2 milyon (+%0,42)** — bu veri ve eşikte politika para
+kaybettirmedi. "Adalet pahalıdır" varsayımı burada geçerli değil.
+
+### Vekil sızıntısı: kolonu silmek hiçbir şeyi silmiyor
+
+Çıkarılan her özelliğin kalan değişkenlerden ne kadar geri kazanılabildiği ölçüldü:
+
+| Çıkarılan özellik | Tahmin AUC | En güçlü vekiller |
+|---|---:|---|
+| `cnt_fam_members` | **1,0000** | `income_per_person`, `amt_income_total` |
+| `cnt_children` | 0,9858 | `age_years`, `income_per_person` |
+| `code_gender` | 0,9050 | `flag_own_car`, `own_car_age`, `occupation_type` |
+| `name_family_status` | 0,8962 | `income_per_person`, `amt_income_total` |
+
+En çarpıcısı ilk satır: **hane büyüklüğü kalan değişkenlerden tam olarak geri
+hesaplanabiliyor.** Sebep, öznitelik üretimi aşamasında bizzat tanımladığımız
+`income_per_person = amt_income_total / cnt_fam_members` oranı — tersine çevrilince
+`cnt_fam_members` birebir çıkıyor. **Kendi türettiğimiz öznitelik, sildiğimiz bilgiye
+kusursuz bir geri dönüş yolu açmış.**
+
+Buradan çıkan kural: hassas bir değişkeni çıkarmak, o bilgiyi modelden çıkarmaz.
+Türetilmiş öznitelikler onu geri getirebilir. Bu yüzden grup bazlı metrikler
+**çıkarılan boyutlarda da** izlenmeye devam eder.
+
+### Sonuç: bir boyutta iyileşme, diğerinde kayma
 
 ![Adalet analizi](reports/adalet_analizi.png)
 
-**Maliyet ihmal edilebilir.** Değişken çıkarıldığında AUC 0,7828 → 0,7815
-(−0,0013), portföy kârı üzerindeki etki −1,9 milyon (−%0,07).
+| Boyut | Equal opportunity farkı | |
+|---|---|---|
+| Cinsiyet *(çıkarıldı)* | %6,74 → %5,26 | iyileşti |
+| Medeni durum *(çıkarıldı)* | %9,49 → %9,30 | iyileşti |
+| **Yaş bandı** *(modelde kalıyor)* | %16,75 → %19,09 | kötüleşti |
+| **Bölge derecesi** *(modelde kalıyor)* | %13,14 → %14,53 | kötüleşti |
 
-**Ancak kolonu silmek tek başına yetmiyor.** Kalan 227 değişkenden cinsiyet
-**AUC 0,909** ile tahmin edilebiliyor. En güçlü vekil, açık farkla araba
-sahipliği (`flag_own_car`); ardından meslek ve gelir geliyor. Bu nedenle
-grup bazlı adalet metrikleri izlemeye devam edilmelidir — hassas değişkeni
-silip "model artık adil" demek, ayrımcılığı yok etmez, yalnızca ölçülemez hâle
-getirir.
+Dürüst okuma: **en büyük eşitsizlik, çıkarılan değişkenlerde değil — bırakılanlarda.**
+Yaş bandında fark %19'a çıkıyor; 30 yaş altındaki *ödeyecek* müşterilerin %23,4'ü
+reddedilirken 60 yaş üstünde bu oran %4,3. Üstelik korumalı özellikler çıkarılınca
+yaş ve bölge farkları **arttı** — model kaybettiği sinyali kalan değişkenlerden
+telafi etti.
 
-| Ölçüt | Cinsiyetli | Cinsiyetsiz | |
-|---|---:|---:|---|
-| Onay oranı farkı (demographic parity) | %8,28 | %5,73 | iyileşti |
-| Ödeyecek müşterinin reddedilme farkı (equal opportunity) | %6,74 | %4,32 | iyileşti |
-| Onaylananlarda temerrüt farkı (predictive parity) | %1,30 | %1,59 | kötüleşti |
+Bu, "hassas değişkeni çıkardık, model adil" cümlesinin neden yetersiz olduğunu
+gösterir. Politika iki boyutu iyileştirdi, eşitsizliği kısmen diğerlerine kaydırdı.
+Yaş ve bölge, meşru risk bilgisi taşıdıkları için modelde bırakıldı; karşılığında
+panelde sürekli izlenmeleri gerekiyor (`monitoring.v_segment_performans`).
 
-Erkeklerde "ödeyecekken reddedilme" oranı %15,7'den %12,9'a düştü.
+### Neden bu ölçüt
 
-Üçüncü ölçütün kötüleşmesi bir kusur değil, **imkânsızlık teoreminin** sonucudur
-(Kleinberg ve ark.; Chouldechova, 2016–17): grupların gerçek temerrüt oranları
-farklıyken (kadın %6,99, erkek %10,17) bir model aynı anda hem eşit hata oranlarına
-hem eşit isabet oranına sahip olamaz. Bu projede **equal opportunity** ölçütü
-tercih edilmiştir: *ödeyecek bir müşterinin reddedilme olasılığı cinsiyetine
-bağlı olmamalıdır.* Bu ölçüt, kimseye hak etmediği krediyi vermeyi gerektirmediği
-için kredi riskinde en savunulabilir olanıdır.
+Grupların gerçek temerrüt oranları farklıyken (kadın %6,99, erkek %10,17) bir model
+aynı anda hem eşit hata oranlarına hem eşit isabet oranına sahip **olamaz** —
+imkânsızlık teoremi (Kleinberg ve ark.; Chouldechova, 2016–17). Dolayısıyla hangi
+adalet tanımının seçildiği gerekçelendirilmelidir.
+
+Bu projede **equal opportunity** tercih edilmiştir: *ödeyecek bir müşterinin
+reddedilme olasılığı grubuna bağlı olmamalıdır.* Kimseye hak etmediği krediyi
+vermeyi gerektirmediği için kredi riskinde en savunulabilir ölçüttür.
 
 ### Değişken seçimi: üç aşamalı ve denetlenebilir
 

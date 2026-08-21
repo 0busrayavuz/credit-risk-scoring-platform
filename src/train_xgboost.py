@@ -41,6 +41,7 @@ from src.config import MODELS_DIR, RANDOM_STATE, REPORTS_DIR, TARGET
 from src.data import kolon_tipleri, model_input_yukle, ozet, veri_bol
 from src.metrics import degerlendir, dilim_analizi, rapor_yazdir
 from src.takip import deney
+from src.korumali_ozellikler import cikarilanlar, temiz_ozellikler
 
 
 def PARAMETREler_kayit() -> dict:
@@ -71,11 +72,13 @@ PARAMETRELER = dict(
 )
 
 
-def main() -> None:
+def main(adil: bool = False) -> None:
+    """adil=True ise Kademe 1 korumali ozellikler modele hic girmez."""
     baslangic = time.time()
+    ek = "_adil" if adil else ""
 
     print("=" * 78)
-    print("VERI")
+    print("VERI" + ("  (ADIL SURUM - korumali ozellikler haric)" if adil else ""))
     print("=" * 78)
     df = model_input_yukle()
     train, valid, test = veri_bol(df)
@@ -84,7 +87,14 @@ def main() -> None:
 
     tipler = kolon_tipleri(df)
     ozellikler = tipler["ozellikler"]
-    print(f"\nkullanilan degisken: {len(ozellikler)} (TAMAMI)")
+
+    if adil:
+        cikan = cikarilanlar(ozellikler)
+        ozellikler = temiz_ozellikler(ozellikler)
+        print(f"\nKorumali ozellikler cikarildi ({len(cikan)}): {', '.join(cikan)}")
+
+    print(f"\nkullanilan degisken: {len(ozellikler)}"
+          + ("" if adil else " (TAMAMI - denetim modeli)"))
     print("Skorkartta 54'e indirmistik cunku her satirin denetlenebilir olmasi")
     print("gerekiyordu. XGBoost'ta boyle bir kisit yok: coklu dogrusal baglanti")
     print("agac modellerinde katsayi isareti bozmaz, sadece onemi paylastirir.")
@@ -156,7 +166,7 @@ def main() -> None:
         .reset_index(drop=True)
     )
     onem["pay_yuzde"] = (100 * onem["onem"] / onem["onem"].sum()).round(2)
-    onem.to_csv(REPORTS_DIR / "xgboost_degisken_onemi.csv",
+    onem.to_csv(REPORTS_DIR / f"xgboost_degisken_onemi{ek}.csv",
                 index=False, encoding="utf-8")
 
     print("\n" + "=" * 78)
@@ -168,17 +178,22 @@ def main() -> None:
     kullanilan = int((onem["onem"] > 0).sum())
     print(f"\nModelin fiilen kullandigi degisken: {kullanilan} / {len(ozellikler)}")
 
-    model.save_model(str(MODELS_DIR / "xgboost.json"))
-    ozet_df.to_json(REPORTS_DIR / "model_karsilastirma.json",
+    model.save_model(str(MODELS_DIR / f"xgboost{ek}.json"))
+    ozet_df.to_json(REPORTS_DIR / f"model_karsilastirma{ek}.json",
                     orient="records", indent=2, force_ascii=False)
 
     # --- Deney kaydi -------------------------------------------------
     # Parametreler, metrikler, uretilen dosyalar ve modelin kendisi tek bir
     # kayda baglanir. Boylece "hangi ayarlarla 0.78 almistik?" sorusu
     # sonradan cevaplanabilir hale gelir.
-    with deney("xgboost", {**PARAMETREler_kayit(), "degisken_sayisi": len(ozellikler)}) as kosu:
+    with deney(f"xgboost{'-adil' if adil else ''}", {
+        **PARAMETREler_kayit(),
+        "degisken_sayisi": len(ozellikler),
+        "korumali_ozellik_politikasi": "kademe-1 haric" if adil else "uygulanmadi",
+    }) as kosu:
         kosu.etiket("model_turu", "gradyan artirmali agaclar")
         kosu.etiket("aciklanabilirlik", "SHAP gerekli (dogrudan okunamaz)")
+        kosu.etiket("rol", "uretim" if adil else "denetim (korumali ozellikler dahil)")
         kosu.metrikler({
             **{k: v for k, v in sonuclar[-1].items() if k != "model"},
             "egitim_auc": egitim_auc,
@@ -186,7 +201,7 @@ def main() -> None:
             "en_iyi_tur": model.best_iteration,
             "kullanilan_degisken": kullanilan,
         })
-        kosu.dosya(REPORTS_DIR / "xgboost_degisken_onemi.csv")
+        kosu.dosya(REPORTS_DIR / f"xgboost_degisken_onemi{ek}.csv")
         kosu.model_xgboost(model)
         print(f"\nMLflow kaydi: {kosu.id}")
 
@@ -198,4 +213,6 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(adil="--adil" in sys.argv)

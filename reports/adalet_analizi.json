@@ -1,71 +1,393 @@
 {
-  "korunan_ozellik": "code_gender",
-  "auc_kaybi": 0.0013058973883388614,
-  "vekil_tahmin_auc": 0.9090757398498476,
+  "politika": {
+    "kademe_1": [
+      "code_gender",
+      "name_family_status",
+      "cnt_children",
+      "cnt_fam_members"
+    ],
+    "izlenen": [
+      "code_gender",
+      "name_family_status",
+      "age_years",
+      "region_rating_client_w_city"
+    ]
+  },
+  "cikarilan": [
+    "code_gender",
+    "cnt_children",
+    "name_family_status",
+    "cnt_fam_members"
+  ],
   "esikler": {
-    "cinsiyetli": 0.15213032581453634,
-    "cinsiyetsiz": 0.16210526315789472
+    "denetim": 0.15213032581453634,
+    "cinsiyetsiz": 0.13966165413533835,
+    "adil": 0.13966165413533835
+  },
+  "vekil_sizinti_auc": {
+    "code_gender": 0.9050287421379105,
+    "cnt_children": 0.985813299295729,
+    "name_family_status": 0.8961532655406356,
+    "cnt_fam_members": 0.9999986620117793
   },
   "kar": {
-    "cinsiyetli": 2651890302.6299996,
-    "cinsiyetsiz": 2649952985.625
+    "denetim": 2651890302.6299996,
+    "adil": 2663088116.535
   },
-  "grup_metrikleri_oncesi": [
+  "adalet_ozeti": [
     {
-      "grup": "F",
-      "basvuru": 40561,
-      "onay_orani": 0.887478119375755,
-      "gercek_temerrut": 0.06991938068588052,
-      "iyi_musteri_red_orani": 0.08988734261100062,
-      "kotu_musteri_red_orani": 0.4136107193229901,
-      "onaylananda_temerrut": 0.04619829430230297
+      "boyut": "code_gender",
+      "boyut_ad": "Cinsiyet  (çıkarıldı)",
+      "eo_once": 0.06736107586754914,
+      "eo_sonra": 0.05256087806441523,
+      "dp_once": 0.08279808117136156,
+      "dp_sonra": 0.06658764716917809,
+      "pp_once": 0.0129708451635724,
+      "pp_sonra": 0.014708526547891329
     },
     {
-      "grup": "M",
-      "basvuru": 20940,
-      "onay_orani": 0.8046800382043935,
-      "gercek_temerrut": 0.10167144221585482,
-      "iyi_musteri_red_orani": 0.15724841847854976,
-      "kotu_musteri_red_orani": 0.5317050258337248,
-      "onaylananda_temerrut": 0.05916913946587537
+      "boyut": "name_family_status",
+      "boyut_ad": "Medeni durum  (çıkarıldı)",
+      "eo_once": 0.09492161455623083,
+      "eo_sonra": 0.09304151869450905,
+      "dp_once": 0.11325090514009717,
+      "dp_sonra": 0.11050555935911643,
+      "pp_once": 0.017720948856911188,
+      "pp_sonra": 0.017068617716868892
     },
     {
-      "grup": "XNA",
-      "basvuru": 2,
-      "onay_orani": 0.5,
-      "gercek_temerrut": 0.0,
-      "iyi_musteri_red_orani": 0.5,
-      "kotu_musteri_red_orani": NaN,
-      "onaylananda_temerrut": 0.0
+      "boyut": "age_years",
+      "boyut_ad": "Yaş bandı  (modelde kalıyor)",
+      "eo_once": 0.16746476173740643,
+      "eo_sonra": 0.1908963110346431,
+      "dp_once": 0.19843759439051967,
+      "dp_sonra": 0.22110024383574467,
+      "pp_once": 0.02451640891052094,
+      "pp_sonra": 0.023348577416796516
+    },
+    {
+      "boyut": "region_rating_client_w_city",
+      "boyut_ad": "Bölge derecesi  (modelde kalıyor)",
+      "eo_once": 0.13142582103788136,
+      "eo_sonra": 0.1452559966086926,
+      "dp_once": 0.1661947311218086,
+      "dp_sonra": 0.17969273768812455,
+      "pp_once": 0.02270817720044744,
+      "pp_sonra": 0.02113525799243334
     }
   ],
-  "grup_metrikleri_sonrasi": [
-    {
-      "grup": "F",
-      "basvuru": 40561,
-      "onay_orani": 0.8920638051330095,
-      "gercek_temerrut": 0.06991938068588052,
-      "iyi_musteri_red_orani": 0.08585818422796554,
-      "kotu_musteri_red_orani": 0.40162200282087446,
-      "onaylananda_temerrut": 0.04690047812508637
+  "grup_detay": {
+    "code_gender": {
+      "once": [
+        {
+          "grup": "F",
+          "basvuru": 40561,
+          "onay_orani": 0.887478119375755,
+          "gercek_temerrut": 0.06991938068588052,
+          "iyi_musteri_red_orani": 0.08988734261100062,
+          "kotu_musteri_red_orani": 0.4136107193229901,
+          "onaylananda_temerrut": 0.04619829430230297
+        },
+        {
+          "grup": "M",
+          "basvuru": 20940,
+          "onay_orani": 0.8046800382043935,
+          "gercek_temerrut": 0.10167144221585482,
+          "iyi_musteri_red_orani": 0.15724841847854976,
+          "kotu_musteri_red_orani": 0.5317050258337248,
+          "onaylananda_temerrut": 0.05916913946587537
+        },
+        {
+          "grup": "XNA",
+          "basvuru": 2,
+          "onay_orani": 0.5,
+          "gercek_temerrut": 0.0,
+          "iyi_musteri_red_orani": 0.5,
+          "kotu_musteri_red_orani": NaN,
+          "onaylananda_temerrut": 0.0
+        }
+      ],
+      "sonra": [
+        {
+          "grup": "F",
+          "basvuru": 40561,
+          "onay_orani": 0.8640566060994551,
+          "gercek_temerrut": 0.06991938068588052,
+          "iyi_musteri_red_orani": 0.11111994698475813,
+          "kotu_musteri_red_orani": 0.4661495063469676,
+          "onaylananda_temerrut": 0.043199132593374615
+        },
+        {
+          "grup": "M",
+          "basvuru": 20940,
+          "onay_orani": 0.797468958930277,
+          "gercek_temerrut": 0.10167144221585482,
+          "iyi_musteri_red_orani": 0.16368082504917336,
+          "kotu_musteri_red_orani": 0.5457961484264913,
+          "onaylananda_temerrut": 0.057907659141265944
+        },
+        {
+          "grup": "XNA",
+          "basvuru": 2,
+          "onay_orani": 1.0,
+          "gercek_temerrut": 0.0,
+          "iyi_musteri_red_orani": 0.0,
+          "kotu_musteri_red_orani": NaN,
+          "onaylananda_temerrut": 0.0
+        }
+      ]
     },
-    {
-      "grup": "M",
-      "basvuru": 20940,
-      "onay_orani": 0.8347659980897804,
-      "gercek_temerrut": 0.10167144221585482,
-      "iyi_musteri_red_orani": 0.12907341449152088,
-      "kotu_musteri_red_orani": 0.4847346171911696,
-      "onaylananda_temerrut": 0.06275743707093821
+    "name_family_status": {
+      "once": [
+        {
+          "grup": "Married",
+          "basvuru": 39279,
+          "onay_orani": 0.8710761475597648,
+          "gercek_temerrut": 0.07663127880037679,
+          "iyi_musteri_red_orani": 0.10259450219195454,
+          "kotu_musteri_red_orani": 0.4461794019933555,
+          "onaylananda_temerrut": 0.04872132105801549
+        },
+        {
+          "grup": "Single / not married",
+          "basvuru": 9085,
+          "onay_orani": 0.8118877270225646,
+          "gercek_temerrut": 0.09257017061089708,
+          "iyi_musteri_red_orani": 0.15368753032508486,
+          "kotu_musteri_red_orani": 0.525564803804994,
+          "onaylananda_temerrut": 0.05409436008676789
+        },
+        {
+          "grup": "Civil marriage",
+          "basvuru": 5963,
+          "onay_orani": 0.8143551903404327,
+          "gercek_temerrut": 0.09659567331879926,
+          "iyi_musteri_red_orani": 0.15017635047336175,
+          "kotu_musteri_red_orani": 0.5173611111111112,
+          "onaylananda_temerrut": 0.05724876441515651
+        },
+        {
+          "grup": "Separated",
+          "basvuru": 3930,
+          "onay_orani": 0.8646310432569975,
+          "gercek_temerrut": 0.09033078880407125,
+          "iyi_musteri_red_orani": 0.10433566433566432,
+          "kotu_musteri_red_orani": 0.44788732394366193,
+          "onaylananda_temerrut": 0.05768098881695115
+        },
+        {
+          "grup": "Widow",
+          "basvuru": 3246,
+          "onay_orani": 0.9251386321626618,
+          "gercek_temerrut": 0.056377079482439925,
+          "iyi_musteri_red_orani": 0.05876591576885404,
+          "kotu_musteri_red_orani": 0.34426229508196726,
+          "onaylananda_temerrut": 0.03996003996003996
+        }
+      ],
+      "sonra": [
+        {
+          "grup": "Married",
+          "basvuru": 39279,
+          "onay_orani": 0.8484177295756002,
+          "gercek_temerrut": 0.07663127880037679,
+          "iyi_musteri_red_orani": 0.12266674019134793,
+          "kotu_musteri_red_orani": 0.5,
+          "onaylananda_temerrut": 0.04516129032258064
+        },
+        {
+          "grup": "Single / not married",
+          "basvuru": 9085,
+          "onay_orani": 0.7992294991744634,
+          "gercek_temerrut": 0.09257017061089708,
+          "iyi_musteri_red_orani": 0.16715186802523052,
+          "kotu_musteri_red_orani": 0.530321046373365,
+          "onaylananda_temerrut": 0.05440022035532296
+        },
+        {
+          "grup": "Civil marriage",
+          "basvuru": 5963,
+          "onay_orani": 0.8135166862317625,
+          "gercek_temerrut": 0.09659567331879926,
+          "iyi_musteri_red_orani": 0.15054761462780764,
+          "kotu_musteri_red_orani": 0.5225694444444444,
+          "onaylananda_temerrut": 0.05668934240362812
+        },
+        {
+          "grup": "Separated",
+          "basvuru": 3930,
+          "onay_orani": 0.8544529262086514,
+          "gercek_temerrut": 0.09033078880407125,
+          "iyi_musteri_red_orani": 0.11356643356643359,
+          "kotu_musteri_red_orani": 0.46760563380281694,
+          "onaylananda_temerrut": 0.05628350208457415
+        },
+        {
+          "grup": "Widow",
+          "basvuru": 3246,
+          "onay_orani": 0.9097350585335798,
+          "gercek_temerrut": 0.056377079482439925,
+          "iyi_musteri_red_orani": 0.07411034933072147,
+          "kotu_musteri_red_orani": 0.360655737704918,
+          "onaylananda_temerrut": 0.03962072468675923
+        }
+      ]
     },
-    {
-      "grup": "XNA",
-      "basvuru": 2,
-      "onay_orani": 1.0,
-      "gercek_temerrut": 0.0,
-      "iyi_musteri_red_orani": 0.0,
-      "kotu_musteri_red_orani": NaN,
-      "onaylananda_temerrut": 0.0
+    "age_years": {
+      "once": [
+        {
+          "grup": "31-40",
+          "basvuru": 16502,
+          "onay_orani": 0.8197188219609745,
+          "gercek_temerrut": 0.09574597018543207,
+          "iyi_musteri_red_orani": 0.14475271411338964,
+          "kotu_musteri_red_orani": 0.5158227848101266,
+          "onaylananda_temerrut": 0.056553559547571526
+        },
+        {
+          "grup": "41-50",
+          "basvuru": 15293,
+          "onay_orani": 0.871313672922252,
+          "gercek_temerrut": 0.07604786503629112,
+          "iyi_musteri_red_orani": 0.10155697098372263,
+          "kotu_musteri_red_orani": 0.45829750644883915,
+          "onaylananda_temerrut": 0.04727954971857411
+        },
+        {
+          "grup": "51-60",
+          "basvuru": 13606,
+          "onay_orani": 0.915845950316037,
+          "gercek_temerrut": 0.06298691753638101,
+          "iyi_musteri_red_orani": 0.06690720840850262,
+          "kotu_musteri_red_orani": 0.34072345390898484,
+          "onaylananda_temerrut": 0.045341465371960515
+        },
+        {
+          "grup": "≤30",
+          "basvuru": 8967,
+          "onay_orani": 0.752648600423776,
+          "gercek_temerrut": 0.11263521802163488,
+          "iyi_musteri_red_orani": 0.20610782958401408,
+          "kotu_musteri_red_orani": 0.5722772277227723,
+          "onaylananda_temerrut": 0.06400948288635354
+        },
+        {
+          "grup": "60+",
+          "basvuru": 7135,
+          "onay_orani": 0.9510861948142957,
+          "gercek_temerrut": 0.049754730203223546,
+          "iyi_musteri_red_orani": 0.03864306784660765,
+          "kotu_musteri_red_orani": 0.24507042253521127,
+          "onaylananda_temerrut": 0.0394930739758326
+        }
+      ],
+      "sonra": [
+        {
+          "grup": "31-40",
+          "basvuru": 16502,
+          "onay_orani": 0.7935401769482487,
+          "gercek_temerrut": 0.09574597018543207,
+          "iyi_musteri_red_orani": 0.1689451816110441,
+          "kotu_musteri_red_orani": 0.5607594936708861,
+          "onaylananda_temerrut": 0.05299732722413135
+        },
+        {
+          "grup": "41-50",
+          "basvuru": 15293,
+          "onay_orani": 0.8575165108219447,
+          "gercek_temerrut": 0.07604786503629112,
+          "iyi_musteri_red_orani": 0.11401273885350316,
+          "kotu_musteri_red_orani": 0.48839208942390366,
+          "onaylananda_temerrut": 0.04537135885313406
+        },
+        {
+          "grup": "51-60",
+          "basvuru": 13606,
+          "onay_orani": 0.9041599294428928,
+          "gercek_temerrut": 0.06298691753638101,
+          "iyi_musteri_red_orani": 0.07694721154600359,
+          "kotu_musteri_red_orani": 0.37689614935822635,
+          "onaylananda_temerrut": 0.043407576003901806
+        },
+        {
+          "grup": "≤30",
+          "basvuru": 8967,
+          "onay_orani": 0.7240994758559162,
+          "gercek_temerrut": 0.11263521802163488,
+          "iyi_musteri_red_orani": 0.23425914289305017,
+          "kotu_musteri_red_orani": 0.6039603960396039,
+          "onaylananda_temerrut": 0.061604805174803635
+        },
+        {
+          "grup": "60+",
+          "basvuru": 7135,
+          "onay_orani": 0.9451997196916608,
+          "gercek_temerrut": 0.049754730203223546,
+          "iyi_musteri_red_orani": 0.04336283185840706,
+          "kotu_musteri_red_orani": 0.2732394366197183,
+          "onaylananda_temerrut": 0.03825622775800712
+        }
+      ]
+    },
+    "region_rating_client_w_city": {
+      "once": [
+        {
+          "grup": "bölge 2",
+          "basvuru": 45862,
+          "onay_orani": 0.8653351358423096,
+          "gercek_temerrut": 0.07978282674109284,
+          "iyi_musteri_red_orani": 0.10752790086012842,
+          "kotu_musteri_red_orani": 0.44766329598250887,
+          "onaylananda_temerrut": 0.05092475936098372
+        },
+        {
+          "grup": "bölge 3",
+          "basvuru": 8797,
+          "onay_orani": 0.7687848130044334,
+          "gercek_temerrut": 0.11162896441968853,
+          "iyi_musteri_red_orani": 0.1861804222648752,
+          "kotu_musteri_red_orani": 0.5896130346232179,
+          "onaylananda_temerrut": 0.05958893981960668
+        },
+        {
+          "grup": "bölge 1",
+          "basvuru": 6844,
+          "onay_orani": 0.934979544126242,
+          "gercek_temerrut": 0.04734073641145529,
+          "iyi_musteri_red_orani": 0.054754601226993826,
+          "kotu_musteri_red_orani": 0.2716049382716049,
+          "onaylananda_temerrut": 0.03688076261915924
+        }
+      ],
+      "sonra": [
+        {
+          "grup": "bölge 2",
+          "basvuru": 45862,
+          "onay_orani": 0.8478260869565217,
+          "gercek_temerrut": 0.07978282674109284,
+          "iyi_musteri_red_orani": 0.12366419448854349,
+          "kotu_musteri_red_orani": 0.48100573927302537,
+          "onaylananda_temerrut": 0.0488388241648021
+        },
+        {
+          "grup": "bölge 3",
+          "basvuru": 8797,
+          "onay_orani": 0.7438899624872115,
+          "gercek_temerrut": 0.11162896441968853,
+          "iyi_musteri_red_orani": 0.20921305182341654,
+          "kotu_musteri_red_orani": 0.6293279022403259,
+          "onaylananda_temerrut": 0.055623471882640586
+        },
+        {
+          "grup": "bölge 1",
+          "basvuru": 6844,
+          "onay_orani": 0.9235827001753361,
+          "gercek_temerrut": 0.04734073641145529,
+          "iyi_musteri_red_orani": 0.06395705521472395,
+          "kotu_musteri_red_orani": 0.3271604938271605,
+          "onaylananda_temerrut": 0.034488213890207245
+        }
+      ]
     }
-  ]
+  }
 }

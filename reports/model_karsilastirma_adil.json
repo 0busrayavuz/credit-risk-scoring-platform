@@ -1,0 +1,52 @@
+[
+  {
+    "model":"tek degisken (ext_source_mean)",
+    "auc":0.7150186794,
+    "gini":0.4300373588,
+    "ks":0.3252659164,
+    "pr_auc":0.1905820539,
+    "brier":null,
+    "n":61502,
+    "temerrut_orani":0.080729082
+  },
+  {
+    "model":"lojistik regresyon (10 degisken)",
+    "auc":0.7355103141,
+    "gini":0.4710206281,
+    "ks":0.3492153798,
+    "pr_auc":0.2119429076,
+    "brier":0.0692528312,
+    "n":61502,
+    "temerrut_orani":0.080729082
+  },
+  {
+    "model":"WOE scorecard (52 degisken)",
+    "auc":0.7639596745,
+    "gini":0.527919349,
+    "ks":0.3972775593,
+    "pr_auc":0.2421044447,
+    "brier":0.0677394618,
+    "n":61502,
+    "temerrut_orani":0.080729082
+  },
+  {
+    "model":"XGBoost (228 degisken)",
+    "auc":0.7827692836,
+    "gini":0.5655385673,
+    "ks":0.4294695196,
+    "pr_auc":0.2689594149,
+    "brier":0.0664325291,
+    "n":61502,
+    "temerrut_orani":0.080729082
+  },
+  {
+    "model":"XGBoost (224 degisken)",
+    "auc":0.7807317993,
+    "gini":0.5614635986,
+    "ks":0.4290364511,
+    "pr_auc":0.2680811453,
+    "brier":0.066512731,
+    "n":61502,
+    "temerrut_orani":0.080729082
+  }
+]

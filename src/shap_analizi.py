@@ -146,16 +146,30 @@ def deger_yaz(v) -> str:
     return str(v)
 
 
-def main() -> None:
+def main(denetim: bool = False) -> None:
+    """denetim=True: korumali ozellikleri de iceren DENETIM modelini inceler.
+
+    Varsayilan, SERVISE KONAN adil modeldir. Ilk surumde SHAP raporu denetim
+    modeli uzerinde uretilmis, README'de ise 'model cinsiyetten arindirildi'
+    denilmisti - yani belgelenen model ile calisan model farkliydi. Bu tutarsizlik
+    giderildi: rapor artik varsayilan olarak servisteki modeli belgeler.
+    """
+    ek = "_denetim" if denetim else ""
+    dosya = "xgboost.json" if denetim else "xgboost_adil.json"
+
     print("=" * 78)
     print("VERI VE MODEL")
     print("=" * 78)
+    print(f"model: {dosya}  "
+          f"({'DENETIM - korumali ozellikler dahil' if denetim else 'SERVISTEKI adil model'})")
     df = model_input_yukle()
     train, valid, test = veri_bol(df)
-    ozellikler = kolon_tipleri(df)["ozellikler"]
 
     model = xgb.XGBClassifier()
-    model.load_model(str(MODELS_DIR / "xgboost.json"))
+    model.load_model(str(MODELS_DIR / dosya))
+    # Ozellik listesini modelin KENDISINDEN aliyoruz: boylece denetim ve adil
+    # modeller farkli degisken setine sahip olsa bile kod tek yol izler.
+    ozellikler = list(model.get_booster().feature_names)
 
     ornek = test.sample(n=min(ORNEK, len(test)), random_state=RANDOM_STATE)
     X = ornek[ozellikler]
@@ -210,7 +224,7 @@ def main() -> None:
     )
     onem["pay_yuzde"] = (100 * onem["ortalama_mutlak_shap"]
                          / onem["ortalama_mutlak_shap"].sum()).round(2)
-    onem.to_csv(REPORTS_DIR / "shap_global_onem.csv", index=False, encoding="utf-8")
+    onem.to_csv(REPORTS_DIR / f"shap_global_onem{ek}.csv", index=False, encoding="utf-8")
 
     print("\n" + "=" * 78)
     print("GLOBAL: EN ONEMLI 20 DEGISKEN (ortalama |SHAP|)")
@@ -219,14 +233,14 @@ def main() -> None:
         print(f"  {r['degisken']:40s} {r['ortalama_mutlak_shap']:.4f}  "
               f"(%{r['pay_yuzde']:.1f})")
 
-    global_grafik(onem, REPORTS_DIR / "shap_global_onem.png")
+    global_grafik(onem, REPORTS_DIR / f"shap_global_onem{ek}.png")
 
     # SHAP siralamasi ile 'gain' siralamasini karsilastir.
     # Ikisi farkli sorulara cevap verir: gain "agac kurarken ne kadar ise
     # yaradi", SHAP "tahminleri ne kadar degistiriyor". Buyuk ayrisma,
     # bir degiskenin cok bolunmede kullanildigi ama tahmini az degistirdigi
     # (ya da tersi) anlamina gelir.
-    gain_yol = REPORTS_DIR / "xgboost_degisken_onemi.csv"
+    gain_yol = REPORTS_DIR / f"xgboost_degisken_onemi{'' if denetim else '_adil'}.csv"
     if gain_yol.exists():
         gain = pd.read_csv(gain_yol)
         birlesik = (
@@ -285,10 +299,10 @@ def main() -> None:
             f"Karar gerekçesi — {'reddedilen' if karar == 'RED' else 'onaylanan'} başvuru",
             f"tahmin %{100*olasilik[idx]:.2f} · eşik %{100*ESIK:.1f} · karar {karar} · "
             f"gerçekleşen: {'temerrüt' if y[idx] == 1 else 'ödedi'}",
-            REPORTS_DIR / f"shap_yerel_{etiket}.png",
+            REPORTS_DIR / f"shap_yerel_{etiket}{ek}.png",
         )
 
-    (REPORTS_DIR / "shap_ozet.json").write_text(
+    (REPORTS_DIR / f"shap_ozet{ek}.json").write_text(
         json.dumps({
             "ornek_sayisi": int(len(X)),
             "temel_deger_logodds": temel_deger,
@@ -300,11 +314,13 @@ def main() -> None:
     )
 
     print("\nKaydedilenler:")
-    for f in ["reports/shap_global_onem.png", "reports/shap_global_onem.csv",
-              "reports/shap_yerel_reddedilen.png", "reports/shap_yerel_onaylanan.png",
-              "reports/shap_ozet.json"]:
+    for f in [f"reports/shap_global_onem{ek}.png", f"reports/shap_global_onem{ek}.csv",
+              f"reports/shap_yerel_reddedilen{ek}.png",
+              f"reports/shap_yerel_onaylanan{ek}.png", f"reports/shap_ozet{ek}.json"]:
         print(f"  {f}")
 
 
 if __name__ == "__main__":
-    main()
+    import sys
+
+    main(denetim="--denetim" in sys.argv)

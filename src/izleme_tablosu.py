@@ -119,9 +119,18 @@ def main() -> None:
     print(f"  ortalama tahmin: %{100*cikti['temerrut_olasiligi'].mean():.2f}")
     print(f"  esik           : {esik:.4f}")
 
+    # TABLOYU DROP ETMIYORUZ, TRUNCATE EDIYORUZ.
+    # Sebep: uzerine kurulu 5 gorunum (monitoring.v_*) tabloya bagimli.
+    # DROP TABLE, PostgreSQL tarafindan reddedilir; DROP ... CASCADE ise
+    # gorunumleri de silerdi ve panelin baglantisi her yenilemede kopardi.
+    # TRUNCATE + append, gorunumleri ayakta tutarken veriyi tazeler.
     with motor().begin() as baglanti:
         baglanti.execute(text("CREATE SCHEMA IF NOT EXISTS monitoring"))
-        baglanti.execute(text(f"DROP TABLE IF EXISTS {TABLO}"))
+        varmi = baglanti.execute(
+            text("SELECT to_regclass('monitoring.skor_portfoy')")
+        ).scalar()
+        if varmi:
+            baglanti.execute(text(f"TRUNCATE {TABLO}"))
 
     # chunksize: 307 bin satiri tek seferde gondermek bellek ve ag acisindan
     # verimsizdir; parcalar halinde yaziyoruz.
@@ -130,12 +139,15 @@ def main() -> None:
         if_exists="append", index=False, chunksize=20000, method="multi",
     )
 
+    # Kisitlar ve indeksler yalnizca tablo YENI olusturulduysa eklenir;
+    # TRUNCATE onlari zaten korur.
     with motor().begin() as baglanti:
-        baglanti.execute(text(
-            f"ALTER TABLE {TABLO} ADD PRIMARY KEY (sk_id_curr)"))
+        if not varmi:
+            baglanti.execute(text(
+                f"ALTER TABLE {TABLO} ADD PRIMARY KEY (sk_id_curr)"))
         for k in ("kume", "karar", "risk_bandi", "yas_bandi"):
             baglanti.execute(text(
-                f"CREATE INDEX idx_skor_portfoy_{k} ON {TABLO} ({k})"))
+                f"CREATE INDEX IF NOT EXISTS idx_skor_portfoy_{k} ON {TABLO} ({k})"))
         baglanti.execute(text(f"ANALYZE {TABLO}"))
 
     print(f"\n{TABLO} yazildi: {len(cikti):,} satir x {cikti.shape[1]} kolon")
