@@ -203,7 +203,9 @@ Eşik **doğrulama** kümesinde kâr fonksiyonu maksimize edilerek seçildi, son
 
 ![Kâr eğrisi](reports/kar_egrisi.png)
 
-Test kümesi (61.503 başvuru · marj %12 · LGD %65 varsayımıyla):
+Test kümesi (61.503 başvuru · marj %12 · LGD %65 varsayımıyla).
+**Tutarlar veri seti birimindedir** — veri setinde para birimi tanımlı değildir,
+dolayısıyla anlamlı olan mutlak değerler değil senaryolar arasındaki orandır:
 
 | Senaryo | Onay oranı | Onaylananlarda temerrüt | Portföy kârı |
 |---|---:|---:|---:|
@@ -223,6 +225,9 @@ reddediliyor. Bu takas kâr fonksiyonu tarafından, sezgiyle değil hesapla beli
 
 Marj ve LGD birer varsayımdır; 5×5'lik bir duyarlılık analizi ile optimum eşiğin
 bu varsayımlara bağlılığı ölçülmüştür (onay oranı %59–%98 aralığında değişiyor).
+Kâr modelinin yapısal basitlikleri (iskonto yokluğu, temerrüt zamanlamasının
+dikkate alınmaması, ters seçim) [Sınırlamalar](#sınırlamalar) bölümünde
+listelenmiştir.
 
 ## Açıklanabilirlik (SHAP)
 
@@ -618,6 +623,94 @@ bağımsız hâle geldi. `tests/test_veri_bolme.py` içindeki beş test bunu do�
 en önemlisi, kasıtlı olarak karıştırılmış bir DataFrame'in **aynı** bölmeyi
 üretmesini kontrol eden test. Tüm modeller ve raporlar düzeltmeden sonra
 yeniden üretilmiştir.
+
+## Sınırlamalar
+
+Bu bölüm projenin ne yapmadığını ve sonuçların hangi varsayımlara dayandığını
+açıkça belirtir. Bir modelin sınırlarını bilmek, onu kurmak kadar önemlidir.
+
+### Kredi riskine özgü iki yapısal eksik
+
+**Reddedilen başvuru çıkarımı (reject inference) uygulanmadı.** Veri setindeki
+başvuruların tamamı **onaylanmış** kredilerdir — bir başvurunun temerrüde düşüp
+düşmediğini ancak kredi verildiyse gözlemleyebilirsiniz. Dolayısıyla model,
+gerçek hayatta karşılaşacağı başvuru havuzundan sistematik olarak farklı bir
+popülasyonda eğitilmiştir. Sektörde bu sapma *reject inference* teknikleriyle
+(parcelling, augmentation, fuzzy) düzeltilir. Bu proje bunu yapmaz; dolayısıyla
+raporlanan başarım, gerçek bir başvuru akışında beklenenden iyimser olabilir.
+
+**Zaman bazlı (out-of-time) doğrulama yapılamadı.** Kredi riski modelleri
+rastgele değil, dönemsel bölünerek doğrulanır: eski dönemde eğit, yeni dönemde
+test et. Asıl risk popülasyon kaymasıdır. Home Credit veri setinde **başvuru
+tarihi bulunmadığından** bu mümkün değildir; rastgele katmanlı bölme
+kullanılmıştır. PSI bölümündeki kayma senaryoları da bu nedenle **gerçek değil,
+simüle edilmiştir** — mekanizmanın çalıştığını gösterir, gerçek dünyada kaymayı
+yakalayacağını kanıtlamaz.
+
+### Kâr hesabı
+
+**Para birimi tanımsız.** Veri setinde tutarların birimi belirtilmemiştir.
+Raporlanan "2,65 milyar" gibi değerler **veri seti birimindedir**, herhangi bir
+para birimi değildir. Anlamlı olan mutlak tutar değil, senaryolar arasındaki
+**oransal** farktır.
+
+**Marj ve LGD varsayımdır.** `MARJ = %12` ve `LGD = %65` bu proje için seçilmiş
+değerlerdir, veriden türetilmemiştir. 5×5'lik duyarlılık analizi eşiğin bu
+varsayımlara bağlılığını gösterir (onay oranı %59–%98 arasında değişiyor), ancak
+manşet rakam yine tek bir senaryodan gelir.
+
+**Kâr modeli yapısal olarak basittir.** Paranın zaman değeri hesaba katılmaz;
+temerrüdün kredinin kaçıncı ayında gerçekleştiği dikkate alınmaz (erken temerrüt
+çok daha pahalıdır); reddedilen başvurunun karşı-olgusu sıfır kabul edilir
+(gerçekte müşteri rakibe gider); ters seçim etkisi modellenmez.
+
+**"Eşik, modelden beş kat değerli" karşılaştırması bir sınırlama taşır.**
+Referans alınan 0,50 eşiği kredi riskinde kimsenin kullanmadığı bir değerdir;
+karşılaştırma temiz bir ayrıştırma değil, öğretici bir gösterimdir.
+
+### İstatistiksel titizlik
+
+- **Tek bölme, çapraz doğrulama yok.** Metrikler için güven aralığı hesaplanmadı;
+  modeller arası farkların istatistiksel anlamlılığı test edilmedi.
+- **Hiperparametre araması yapılmadı.** XGBoost parametreleri muhafazakâr
+  değerlerle elle seçildi; 0,7828'in ulaşılabilir tavan olduğu iddia edilemez.
+- **Aşırı öğrenme giderilmedi.** Eğitim–doğrulama farkı 0,084, sağlıklı kabul
+  edilen 0,03'ün üzerinde. Tespit edildi ve raporlandı, ancak düzeltilmedi.
+- **Model karşılaştırması eşit koşullu değil.** Scorecard 52, XGBoost 228
+  değişken kullanır; aradaki farkın ne kadarının model sınıfından, ne kadarının
+  değişken sayısından geldiği ayrıştırılmadı.
+- **Kalibrasyon görselleştirilmedi.** Brier skoru ve dilim bazlı kalibrasyon
+  farkı raporlanır, ancak güvenilirlik eğrisi çizilmemiş ve izotonik/Platt
+  kalibrasyonu uygulanmamıştır — kâr hesabı kalibre olasılıklara dayandığı için
+  bu eksik önemlidir.
+
+### Adalet denetiminin kapsamı
+
+Dört boyut izlenir (cinsiyet, medeni durum, yaş, bölge). **Irk ve etnik köken
+veri setinde bulunmadığından denetlenemez** — bu, ayrımcılık olmadığı anlamına
+gelmez, ölçülemediği anlamına gelir. Ayrıca ölçüldüğü gibi, en büyük eşitsizlik
+modelde bilinçli olarak **bırakılan** boyutlardadır (yaş: %19,1); bu bir çözüm
+değil, gerekçelendirilmiş bir ödünleşmedir.
+
+### Veri ve mühendislik
+
+- Veri seti Home Credit Group'un 2018'de yayımladığı yarışma verisidir;
+  **Türkiye pazarını temsil etmez.** Ürün karması, faiz yapısı ve müşteri
+  davranışı farklıdır.
+- **Sürekli entegrasyon (CI) yok.** Testler otomatik çalışmaz; README'deki test
+  rozeti statiktir.
+- Servisteki "30'dan fazla beklenmedik eksik → İNCELE" eşiği deneyime değil,
+  makul bir tahmine dayanır.
+- API'de kimlik doğrulama, hız sınırlama ve çok örnekli dağıtım yoktur;
+  gösterim amaçlıdır.
+
+### Gerçek bir projede sıradaki adımlar
+
+1. Reject inference ve zaman bazlı doğrulama — başarım tahminini gerçekçi kılar
+2. Marj/LGD değerlerinin kurumun kendi fiyatlama ve tahsilat verisinden alınması
+3. Çapraz doğrulama + güven aralıkları, ardından hiperparametre araması
+4. Kalibrasyon eğrisi ve gerekiyorsa izotonik kalibrasyon
+5. GitHub Actions ile test otomasyonu ve model kayıt sistemine geçiş
 
 ## Yol haritası
 
