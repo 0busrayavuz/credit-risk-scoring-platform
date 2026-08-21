@@ -3,7 +3,7 @@
 [![Lisans: MIT](https://img.shields.io/badge/lisans-MIT-1c5fb0)](LICENSE)
 [![Python](https://img.shields.io/badge/python-3.11%2B-1c5fb0)](#kurulum)
 [![PostgreSQL](https://img.shields.io/badge/postgresql-16-1c5fb0)](#kurulum)
-[![Test](https://img.shields.io/badge/test-15%20ge%C3%A7ti-146b4d)](#testler)
+[![Testler](https://github.com/0busrayavuz/credit-risk-scoring-platform/actions/workflows/testler.yml/badge.svg)](https://github.com/0busrayavuz/credit-risk-scoring-platform/actions/workflows/testler.yml)
 
 Kredi başvurularının temerrüt olasılığını tahmin eden, kararı gerekçelendiren ve
 kâr etkisini ölçen uçtan uca bir risk skorlama sistemi. Veri yüklemeden model
@@ -190,6 +190,64 @@ Scorecard puan bandına göre gerçekleşen temerrüt (yüksek puan = düşük r
 | 524 – 546 | 2.777 | %29,24 |
 | 588 – 610 | 16.618 | %4,92 |
 | 653 – 674 | 1.325 | %0,91 |
+
+## Model doğrulama: bu farklar gerçek mi?
+
+"0,78 > 0,76, demek ki daha iyi" bir istatistik ifadesi değildir. Fark örnekleme
+gürültüsü olabilir; ayrıca iki model farklı sayıda değişken kullandığı için
+karşılaştırma eşit koşullu değildi. Her ikisi de ölçüldü.
+
+![Model doğrulama](reports/model_dogrulama.png)
+
+### Farkın kaynağı ayrıştırıldı
+
+XGBoost, scorecard'ın **tam olarak aynı 50 değişkeniyle** yeniden eğitildi:
+
+| Model | Test AUC | %95 güven aralığı |
+|---|---:|---|
+| WOE scorecard (50 değişken) | 0,7676 | [0,7606 – 0,7742] |
+| XGBoost (50 değişken) | 0,7774 | [0,7709 – 0,7839] |
+| XGBoost (224 değişken) | 0,7838 | [0,7774 – 0,7902] |
+
+**Toplam fark +0,0162 şöyle bölünüyor:**
+
+| Kaynak | Katkı | Pay |
+|---|---:|---:|
+| Model sınıfı (ağaç vs doğrusal, aynı değişkenler) | +0,0098 | **%61** |
+| Ek değişkenler (50 → 224) | +0,0064 | %39 |
+
+Yani XGBoost'un üstünlüğünün çoğunluğu **daha fazla değişken görmesinden değil,
+doğrusal olmayan yapıları ve etkileşimleri yakalayabilmesinden** geliyor. Bu,
+karşılaştırma eşit koşullu yapılmadan bilinemezdi.
+
+### Farklar istatistiksel olarak anlamlı
+
+2.000 yinelemeli **eşli bootstrap** ile (aynı yeniden örnekleme her iki modele
+uygulanır — iki model aynı müşterileri skorladığı için bağımsız varsaymak
+belirsizliği olduğundan büyük gösterirdi):
+
+| Karşılaştırma | Fark | %95 aralık | Sonuç |
+|---|---:|---|---|
+| XGBoost(224) − scorecard | +0,0162 | [+0,0130, +0,0192] | anlamlı |
+| XGBoost(50) − scorecard | +0,0098 | [+0,0069, +0,0126] | anlamlı |
+| XGBoost(224) − XGBoost(50) | +0,0064 | [+0,0045, +0,0084] | anlamlı |
+
+Üç aralık da sıfırı kapsamıyor; farklar gürültü değil.
+
+### Kalibrasyon: kâr hesabının dayanağı
+
+Kâr bazlı eşik, modelin "%10 risk" dediği müşterilerin gerçekten %10 oranında
+batmasına dayanır. Sıralama doğru olsa bile olasılıklar kayık olabilir —
+bu durumda eşik yanlış yerde olurdu.
+
+| Model | Ortalama sapma | En büyük sapma |
+|---|---:|---:|
+| WOE scorecard | 0,27 puan | 1,24 puan |
+| **XGBoost** | **0,20 puan** | **0,62 puan** |
+
+Her iki model de iyi kalibre; XGBoost belirgin şekilde daha iyi. En büyük sapma
+%16 tahmin bandında (gerçekleşen %17,3) — o bölgede risk hafifçe **düşük** tahmin
+ediliyor. Kâr hesabı bu ölçüde bir sapmadan anlamlı biçimde etkilenmez.
 
 ## Kâr bazlı kesim noktası
 
@@ -473,15 +531,27 @@ başvuruyu insan incelemesine yönlendirir.
 python -m pytest tests -v
 ```
 
-15 bütünleşme testi iki dosyada:
+**32 test**, iki gruba ayrılmış:
 
-`test_api.py` — uç nokta sözleşmeleri, hata yönetimi, gerekçelerin etki sırasına
-göre sıralanması, veri kalitesi korumasının devreye girmesi, beklenen eksiklerin
-yanlış alarm üretmemesi ve **servisteki modelin korumalı özellik içermemesi**.
+**Birim testleri (17)** — `test_birim.py`. Hiçbir dış bağımlılığı yok; PSI
+hesabı, Gini/KS metrikleri ve korumalı özellik politikası, sonucu önceden
+bilinen yapay verilerle doğrulanır. **GitHub Actions'ta her itmede çalışır**,
+2 saniye sürer.
 
-`test_veri_bolme.py` — bölmenin tekrarlanabilirliği. En önemlisi, kasıtlı olarak
-karıştırılmış bir DataFrame'in **aynı** bölmeyi üretmesini kontrol eden test;
-bu proje bir veri sızıntısını tam olarak burada yaşadı.
+**Bütünleşme testleri (15)** — çalışan PostgreSQL ve eğitilmiş modeller ister,
+yerelde çalışır:
+
+- `test_api.py` — uç nokta sözleşmeleri, hata yönetimi, gerekçelerin etki
+  sırasına göre sıralanması, veri kalitesi korumasının devreye girmesi ve
+  **servisteki modelin korumalı özellik içermemesi**.
+- `test_veri_bolme.py` — bölmenin tekrarlanabilirliği. En önemlisi, kasıtlı
+  olarak karıştırılmış bir DataFrame'in **aynı** bölmeyi üretmesini kontrol
+  eden test; bu proje bir veri sızıntısını tam olarak burada yaşadı.
+
+```bash
+pytest                        # hepsi (yerel)
+pytest -m "not veritabani"    # yalnızca birim testleri (CI)
+```
 
 > Testlerden biri, korumalı özellik politikası genişletildiğinde kırıldı — çünkü
 > değişken sayısını sabit yazmıştı (`assert 227`). Davranış doğruydu, kırılan
@@ -670,19 +740,19 @@ karşılaştırma temiz bir ayrıştırma değil, öğretici bir gösterimdir.
 
 ### İstatistiksel titizlik
 
-- **Tek bölme, çapraz doğrulama yok.** Metrikler için güven aralığı hesaplanmadı;
-  modeller arası farkların istatistiksel anlamlılığı test edilmedi.
+- **Çapraz doğrulama yapılmadı.** Test AUC'leri için bootstrap güven aralıkları
+  hesaplandı ve modeller arası farkların anlamlılığı eşli bootstrap ile test
+  edildi ([Model doğrulama](#model-doğrulama-bu-farklar-gerçek-mi)); ancak bu,
+  *değerlendirme* belirsizliğini ölçer. *Eğitim* belirsizliği — modelin farklı
+  eğitim bölmelerinde ne kadar oynadığı — ölçülmedi. Bunun için k-katlı çapraz
+  doğrulama gerekir.
 - **Hiperparametre araması yapılmadı.** XGBoost parametreleri muhafazakâr
-  değerlerle elle seçildi; 0,7828'in ulaşılabilir tavan olduğu iddia edilemez.
+  değerlerle elle seçildi; 0,7838'in ulaşılabilir tavan olduğu iddia edilemez.
 - **Aşırı öğrenme giderilmedi.** Eğitim–doğrulama farkı 0,084, sağlıklı kabul
   edilen 0,03'ün üzerinde. Tespit edildi ve raporlandı, ancak düzeltilmedi.
-- **Model karşılaştırması eşit koşullu değil.** Scorecard 52, XGBoost 228
-  değişken kullanır; aradaki farkın ne kadarının model sınıfından, ne kadarının
-  değişken sayısından geldiği ayrıştırılmadı.
-- **Kalibrasyon görselleştirilmedi.** Brier skoru ve dilim bazlı kalibrasyon
-  farkı raporlanır, ancak güvenilirlik eğrisi çizilmemiş ve izotonik/Platt
-  kalibrasyonu uygulanmamıştır — kâr hesabı kalibre olasılıklara dayandığı için
-  bu eksik önemlidir.
+- **Kalibrasyon ölçüldü, ancak düzeltilmedi.** Güvenilirlik eğrisi çizildi ve
+  sapma her iki modelde de 0,3 puanın altında çıktı; bu nedenle izotonik/Platt
+  kalibrasyonu uygulanmadı. Farklı bir veri veya modelde bu adım gerekebilir.
 
 ### Adalet denetiminin kapsamı
 
@@ -697,8 +767,11 @@ değil, gerekçelendirilmiş bir ödünleşmedir.
 - Veri seti Home Credit Group'un 2018'de yayımladığı yarışma verisidir;
   **Türkiye pazarını temsil etmez.** Ürün karması, faiz yapısı ve müşteri
   davranışı farklıdır.
-- **Sürekli entegrasyon (CI) yok.** Testler otomatik çalışmaz; README'deki test
-  rozeti statiktir.
+- **CI yalnızca birim testlerini çalıştırır.** Bütünleşme testleri 58,5 milyon
+  satır yüklenmiş bir PostgreSQL ister; bunu her itmede kurmak pratik değildir
+  (Kaggle kimlik doğrulaması da gerekir). GitHub Actions modüllerin içe
+  aktarılabildiğini ve matematiksel çekirdeği (PSI, Gini/KS, korumalı özellik
+  politikası) doğrular — 17 test. Kalan 15 bütünleşme testi yerelde çalışır.
 - Servisteki "30'dan fazla beklenmedik eksik → İNCELE" eşiği deneyime değil,
   makul bir tahmine dayanır.
 - API'de kimlik doğrulama, hız sınırlama ve çok örnekli dağıtım yoktur;
@@ -708,9 +781,9 @@ değil, gerekçelendirilmiş bir ödünleşmedir.
 
 1. Reject inference ve zaman bazlı doğrulama — başarım tahminini gerçekçi kılar
 2. Marj/LGD değerlerinin kurumun kendi fiyatlama ve tahsilat verisinden alınması
-3. Çapraz doğrulama + güven aralıkları, ardından hiperparametre araması
-4. Kalibrasyon eğrisi ve gerekiyorsa izotonik kalibrasyon
-5. GitHub Actions ile test otomasyonu ve model kayıt sistemine geçiş
+3. K-katlı çapraz doğrulama (eğitim belirsizliği) ve hiperparametre araması
+4. Aşırı öğrenme farkının daraltılması (daha güçlü düzenlileştirme)
+5. Model kayıt sistemine geçiş; modellerin git yerine MLflow Registry'de tutulması
 
 ## Yol haritası
 

@@ -20,6 +20,10 @@ from fastapi.testclient import TestClient
 
 from src.api import app
 
+# Bu dosyadaki her test calisan bir PostgreSQL ve egitilmis modeller ister.
+# CI'da atlanir; yerelde calisir. Gerekce icin pytest.ini'ye bakin.
+pytestmark = pytest.mark.veritabani
+
 
 @pytest.fixture(scope="module")
 def istemci():

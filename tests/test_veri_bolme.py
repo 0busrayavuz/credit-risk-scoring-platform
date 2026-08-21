@@ -26,6 +26,9 @@ import pytest
 from src.config import ID_COL, TARGET
 from src.data import model_input_yukle, veri_bol
 
+# Bu testler features.model_input tablosunu okur; PostgreSQL gerektirir.
+pytestmark = pytest.mark.veritabani
+
 
 @pytest.fixture(scope="module")
 def veri():
